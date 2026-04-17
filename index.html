@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ITP Gang-Run Printing Calculator — Citek Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root {
+    --peacock: #00586F;
+    --peacock-dark: #003E4F;
+    --lime: #A2D45E;
+    --cyan: #00D4FF;
+    --white: #FFFFFF;
+    --off-white: #FAFAFA;
+    --light-gray: #F5F5F5;
+    --border-light: #EFEFEF;
+    --dark-gray: #333333;
+    --medium-gray: #666666;
+    --danger: #D32F2F;
+    --warning: #F59E0B;
+    --success: #16A34A;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--off-white);
+    color: var(--dark-gray);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .app-header {
+    background: linear-gradient(135deg, var(--peacock-dark), var(--peacock));
+    color: var(--white);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-md);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .brand-logo {
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .brand-logo .chevron {
+    color: var(--lime);
+    font-size: 20px;
+    margin-top: -10px;
+  }
+  .brand-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(255,255,255,0.3);
+  }
+  .brand-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .brand-title h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .brand-title p {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 400;
+  }
+  .header-pill {
+    background: rgba(255,255,255,0.12);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .main-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px 32px 60px 32px;
+  }
+
+  .section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .section-tag-bar {
+    width: 24px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--peacock), var(--lime));
+    border-radius: 2px;
+  }
+  .section-tag-text {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--medium-gray);
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--peacock);
+    margin: 0 0 16px 0;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 8px;
+    border-top: 3px solid var(--peacock);
+    box-shadow: var(--shadow-md);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card-flat {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    padding: 16px 18px;
+    border-left: 3px solid var(--peacock);
+  }
+  .kpi.accent { border-left-color: var(--lime); }
+  .kpi.warning { border-left-color: var(--warning); }
+  .kpi.danger { border-left-color: var(--danger); }
+  .kpi-label {
+    font-size: 11px;
+    color: var(--medium-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--dark-gray);
+    line-height: 1.2;
+  }
+  .kpi-unit {
+    font-size: 12px;
+    color: var(--medium-gray);
+    font-weight: 500;
+    margin-left: 4px;
+  }
+  .kpi-foot {
+    font-size: 11px;
+    color: var(--medium-gray);
+    margin-top: 6px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 20px;
+  }
+
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  table.data th {
+    background: var(--peacock);
+    color: var(--white);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 10.5px;
+    letter-spacing: 0.5px;
+    padding: 10px 8px;
+    text-align: left;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    white-space: nowrap;
+  }
+  table.data th:last-child { border-right: none; }
+  table.data td {
+    padding: 8px;
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+  }
+  table.data tr:hover td {
+    background: var(--light-gray);
+  }
+  table.data tr.selected td {
+    background: rgba(162, 212, 94, 0.08);
+  }
+  table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  input[type="text"], input[type="number"], select {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    background: var(--white);
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    border-color: var(--peacock);
+    box-shadow: 0 0 0 3px rgba(0,88,111,0.1);
+  }
+  input.inline {
+    padding: 4px 6px;
+    font-size: 12.5px;
+    min-width: 60px;
+  }
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--lime);
+    cursor: pointer;
+  }
+
+  .btn {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary {
+    background: var(--lime);
+    color: var(--dark-gray);
+    font-weight: 600;
+  }
+  .btn-primary:hover { filter: brightness(0.94); }
+  .btn-secondary {
+    background: var(--peacock);
+    color: var(--white);
+  }
+  .btn-secondary:hover { filter: brightness(1.1); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--peacock);
+    border: 1px solid var(--border-light);
+  }
+  .btn-ghost:hover { background: var(--light-gray); }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid transparent;
+    padding: 4px 8px;
+  }
+  .btn-danger:hover { background: rgba(211,47,47,0.08); }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid var(--border-light);
+    margin-bottom: 20px;
+  }
+  .tab {
+    padding: 10px 18px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--medium-gray);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab:hover { color: var(--peacock); }
+  .tab.active {
+    color: var(--peacock);
+    border-bottom-color: var(--lime);
+    font-weight: 600;
+  }
+
+  .params-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .field label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--medium-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .pill-ok { background: rgba(22,163,74,0.12); color: var(--success); }
+  .pill-warn { background: rgba(245,158,11,0.14); color: var(--warning); }
+  .pill-bad { background: rgba(211,47,47,0.12); color: var(--danger); }
+  .pill-info { background: rgba(0,88,111,0.08); color: var(--peacock); }
+
+  /* Business-friendly Production Order view */
+  .po-section-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0 14px 0;
+  }
+  .po-section-divider .line {
+    flex: 1;
+    height: 1px;
+    background: var(--border-light);
+  }
+  .po-section-divider .lbl {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--medium-gray);
+  }
+
+  .po-header-card {
+    background: linear-gradient(135deg, #F3FAFB 0%, #FFFFFF 60%);
+    border: 1px solid var(--border-light);
+    border-left: 4px solid var(--peacock);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 14px;
+  }
+  .po-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .po-header-top .po-id-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .po-id-block .po-type {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--medium-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+  }
+  .po-id-block .po-id {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--peacock);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.3px;
+  }
+  .po-id-block .po-desc {
+    font-size: 13px;
+    color: var(--dark-gray);
+    font-weight: 500;
+  }
+  .po-header-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .po-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px 18px;
+  }
+  .po-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .po-meta-label {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--medium-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .po-meta-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dark-gray);
+    word-break: break-word;
+  }
+  .po-meta-value .accent-num {
+    color: var(--peacock);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .po-children-wrap {
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .po-children-head {
+    background: var(--light-gray);
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--peacock);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .po-children-head .count {
+    background: var(--peacock);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 10px;
+  }
+  table.data.po-children {
+    font-size: 12px;
+  }
+  table.data.po-children td {
+    padding: 9px 8px;
+    vertical-align: top;
+  }
+  .po-mat-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--peacock);
+    font-size: 11.5px;
+  }
+  .po-mat-desc {
+    font-size: 11.5px;
+    color: var(--medium-gray);
+    margin-top: 1px;
+  }
+  .po-child-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--dark-gray);
+    font-size: 11.5px;
+  }
+  .po-comp-line {
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+  .po-comp-line .code {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--peacock);
+    font-weight: 600;
+  }
+  .po-comp-line .override {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 6px;
+    background: rgba(0,212,255,0.12);
+    color: #0088AA;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .po-prt-line {
+    font-size: 11.5px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--dark-gray);
+    line-height: 1.5;
+  }
+  .po-prt-line .tag {
+    display: inline-block;
+    background: var(--light-gray);
+    color: var(--medium-gray);
+    font-size: 9.5px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-right: 4px;
+    letter-spacing: 0.3px;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .json-view {
+    background: #0d1b20;
+    color: #e8f5f7;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    line-height: 1.55;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+  .json-view .key { color: var(--lime); }
+  .json-view .str { color: #FFD59E; }
+  .json-view .num { color: var(--cyan); }
+  .json-view .mut { color: #F06292; }
+
+  .legend-sap {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    font-size: 12px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+
+  .formula-box {
+    background: var(--light-gray);
+    border-left: 3px solid var(--lime);
+    padding: 12px 16px;
+    font-size: 12.5px;
+    color: var(--dark-gray);
+    margin: 10px 0;
+    border-radius: 4px;
+    line-height: 1.6;
+  }
+  .formula-box code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--white);
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border-light);
+    font-size: 11.5px;
+  }
+
+  .gi-bar {
+    display: flex;
+    height: 6px;
+    margin-top: 40px;
+  }
+  .gi-blue { flex: 5; background: var(--peacock); }
+  .gi-green { flex: 1; background: var(--lime); }
+
+  .foot-note {
+    text-align: center;
+    color: var(--medium-gray);
+    font-size: 11.5px;
+    padding: 20px;
+  }
+  .foot-note strong { color: var(--peacock); }
+
+  .sheet-svg-wrap {
+    background: repeating-linear-gradient(45deg, #fafafa, #fafafa 8px, #f0f0f0 8px, #f0f0f0 16px);
+    padding: 12px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+  }
+  .sheet-svg {
+    background: var(--white);
+    border: 2px solid var(--peacock);
+  }
+
+  .info-callout {
+    background: rgba(0,212,255,0.07);
+    border-left: 3px solid var(--cyan);
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--dark-gray);
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+  .warn-callout {
+    background: rgba(245,158,11,0.08);
+    border-left: 3px solid var(--warning);
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--dark-gray);
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+
+  details summary {
+    cursor: pointer;
+    list-style: none;
+    font-weight: 600;
+    color: var(--peacock);
+    padding: 6px 0;
+    user-select: none;
+  }
+  details summary::before {
+    content: "▸ ";
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+  details[open] summary::before {
+    content: "▾ ";
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useMemo } = React;
+
+// ======================================================================
+//  CITEK Branding components
+// ======================================================================
+function CitekLogo() {
+  return (
+    <div className="brand-logo" aria-label="Citek logo">
+      <span>Citek</span>
+      <span className="chevron">▸</span>
+    </div>
+  );
+}
+
+function Header() {
+  return (
+    <header className="app-header">
+      <div className="brand">
+        <CitekLogo />
+        <div className="brand-divider"></div>
+        <div className="brand-title">
+          <h1>Gang-Run Printing Calculator</h1>
+          <p>SAP S/4HANA Public Cloud · Custom Engine · ITP Demo</p>
+        </div>
+      </div>
+      <div className="header-pill">SAP Platinum Partner</div>
+    </header>
+  );
+}
+
+// ======================================================================
+//  Seed data — mô phỏng dữ liệu ITP (từ intoanphat.com)
+// ======================================================================
+const SEED_DEMAND = [
+  { id:'SO001', ma:'HOP-FV-001', ten:'Hộp dược phẩm FV Hospital — MKS-0115', khach:'FV Hospital',
+    length:210, width:296, sp_to_in:4, to_in_to_nguyen:1, kho_nguyen:'790x1090', kho_in:'395x520',
+    sl:8900, bu_hao_sx:280, thong_so_mau:'CMYK_CMYK', kieu_in:'Offset', include:true },
+  { id:'SO002', ma:'HOP-FV-002', ten:'Hộp Epidemic Conjunctivitis — MPS-0243', khach:'FV Hospital',
+    length:300, width:210, sp_to_in:1, to_in_to_nguyen:1, kho_nguyen:'790x1090', kho_in:'395x520',
+    sl:4500, bu_hao_sx:120, thong_so_mau:'CMYK_CMYK', kieu_in:'Offset', include:true },
+  { id:'SO003', ma:'HOP-FV-003', ten:'Hộp Breastfeeding Guide — MPS-0117', khach:'FV Hospital',
+    length:210, width:296, sp_to_in:3, to_in_to_nguyen:1, kho_nguyen:'790x1090', kho_in:'395x520',
+    sl:6600, bu_hao_sx:200, thong_so_mau:'CMYK_CMYK', kieu_in:'Offset', include:true },
+  { id:'SO004', ma:'HOP-COSMETIC-01', ten:'Hộp mỹ phẩm L\'Oreal Serum 30ml', khach:'L\'Oreal VN',
+    length:80, width:160, sp_to_in:12, to_in_to_nguyen:2, kho_nguyen:'790x1090', kho_in:'395x520',
+    sl:15000, bu_hao_sx:450, thong_so_mau:'CMYK_CMYK', kieu_in:'Offset', include:false },
+  { id:'SO005', ma:'TEM-DLH-001', ten:'Tem nhãn Dalat Hasfarm — Lavender', khach:'Dalat Hasfarm',
+    length:60, width:90, sp_to_in:40, to_in_to_nguyen:4, kho_nguyen:'790x1090', kho_in:'260x360',
+    sl:50000, bu_hao_sx:1000, thong_so_mau:'CMYK_CMYK', kieu_in:'Offset', include:false },
+];
+
+const MAY_IN_MASTER = [
+  { code:'FAM000643', name:'Mitsubishi Diamond V3000LS-5 · Offset 5 màu (2014)',
+    hang:'Mitsubishi', model:'Diamond V3000LS-5', so_mau:5, serial:'2315', nam:2014,
+    kho_max:'—', kho_min:'—', kho_kem:'—' },
+  { code:'FAM000831', name:'RYOBI R752 · Offset 2 màu',
+    hang:'RYOBI', model:'R752', so_mau:2, serial:'—', nam:null,
+    kho_max:'—', kho_min:'—', kho_kem:'—' },
+  { code:'FAM001395', name:'Mitsubishi D3000LS-5 + sấy IR · Offset 5 màu (2008)',
+    hang:'Mitsubishi', model:'D3000LS-5 + sấy IR', so_mau:5, serial:'—', nam:2008,
+    kho_max:'—', kho_min:'—', kho_kem:'—' },
+];
+
+const THONG_SO_MAU = [
+  { code:'CMYK_CMYK', desc:'CMYK 2 mặt', so_kem:8 },
+  { code:'CMYK_CMK', desc:'CMYK · CMK', so_kem:7 },
+  { code:'CMYK_1PHA', desc:'CMYK + 1 màu pha', so_kem:10 },
+  { code:'K_K', desc:'1 màu đen 2 mặt', so_kem:2 },
+];
+
+// ======================================================================
+//  Engine tính toán ghép bài
+// ======================================================================
+function computeGangRun(lines, buHaoInTotal, toInToNguyen) {
+  // 1. Area weight of each line
+  const enriched = lines.map(l => {
+    const dienTich = l.length * l.width; // mm²
+    const weight = dienTich * l.sp_to_in;
+    const toInCan = Math.ceil((l.sl + l.bu_hao_sx) / l.sp_to_in); // tờ in needed if alone
+    return { ...l, dienTich, weight, toInCan };
+  });
+
+  const totalWeight = enriched.reduce((s, l) => s + l.weight, 0);
+
+  // 2. Ratio per SP
+  const withRatio = enriched.map(l => ({
+    ...l,
+    tyLe: totalWeight > 0 ? l.weight / totalWeight : 0,
+  }));
+
+  // 3. Physical numbers
+  const maxToInCan = withRatio.length > 0 ? Math.max(...withRatio.map(l => l.toInCan)) : 0;
+  const toInVatLy = maxToInCan + buHaoInTotal;
+  const toNguyenVatLy = toInToNguyen > 0 ? toInVatLy / toInToNguyen : 0;
+
+  // 4. Allocation per SP
+  const allocated = withRatio.map(l => {
+    const buHaoInSP = l.tyLe * buHaoInTotal;
+    const toNguyenSP = toInToNguyen > 0
+      ? (l.toInCan * l.tyLe + buHaoInSP) / toInToNguyen
+      : 0;
+    // SP physically produced on sheet  = to_in_vat_ly × sp_to_in
+    const spPhysicalAvailable = toInVatLy * l.sp_to_in;
+    const plannedScrap = Math.max(0, spPhysicalAvailable - l.sl);
+    return {
+      ...l,
+      bu_hao_in_sp: buHaoInSP,
+      to_nguyen_sp_allocated: toNguyenSP,
+      sp_physical_on_sheet: spPhysicalAvailable,
+      planned_scrap: plannedScrap,
+    };
+  });
+
+  // 5. Check consistency
+  const sumAllocated = allocated.reduce((s, l) => s + l.to_nguyen_sp_allocated, 0);
+  const variance = toNguyenVatLy - sumAllocated; // waste from gang-run imperfection
+
+  // 6. Utilization % = area demanded (SL × DT) / area printed on all physical sheets
+  //    Area demanded per SP = DT_i × SL_i (only useful output, not including BHSX)
+  //    Area printed     per SP = DT_i × SP/tờ_i × toInVatLy
+  const totalAreaDemand = allocated.reduce((s, l) =>
+    s + (l.dienTich * l.sl), 0);
+  const totalAreaPotential = allocated.reduce((s, l) =>
+    s + (l.dienTich * l.sp_to_in * toInVatLy), 0);
+  const utilization = totalAreaPotential > 0
+    ? (totalAreaDemand / totalAreaPotential) * 100
+    : 0;
+
+  return {
+    lines: allocated,
+    totalWeight,
+    maxToInCan,
+    toInVatLy,
+    toNguyenVatLy,
+    sumAllocated,
+    variance,
+    utilization,
+    totalAreaDemand,
+    totalAreaPotential,
+  };
+}
+
+// ======================================================================
+//  KPI bar
+// ======================================================================
+function KPIBar({ result, selectedCount }) {
+  const { toInVatLy, toNguyenVatLy, utilization, variance } = result;
+  const utilPill = utilization >= 80 ? 'pill-ok' : utilization >= 60 ? 'pill-warn' : 'pill-bad';
+  return (
+    <div className="kpi-grid">
+      <div className="kpi">
+        <div className="kpi-label">SP trong ghép bài</div>
+        <div className="kpi-value">{selectedCount}<span className="kpi-unit">SP</span></div>
+        <div className="kpi-foot">Child Production Orders sẽ tạo</div>
+      </div>
+      <div className="kpi accent">
+        <div className="kpi-label">Tờ in vật lý</div>
+        <div className="kpi-value">{Math.round(toInVatLy).toLocaleString()}<span className="kpi-unit">tờ</span></div>
+        <div className="kpi-foot">Số tờ in thực chạy máy = max(tờ in cần) + bù hao in</div>
+      </div>
+      <div className="kpi">
+        <div className="kpi-label">Tờ nguyên vật lý</div>
+        <div className="kpi-value">{toNguyenVatLy.toFixed(1)}<span className="kpi-unit">tờ</span></div>
+        <div className="kpi-foot">Xuất kho giấy cho máy in</div>
+      </div>
+      <div className={`kpi ${utilization >= 80 ? 'accent' : utilization >= 60 ? 'warning' : 'danger'}`}>
+        <div className="kpi-label">Khai thác khổ giấy</div>
+        <div className="kpi-value">{utilization.toFixed(1)}<span className="kpi-unit">%</span></div>
+        <div className="kpi-foot">
+          <span className={`pill ${utilPill}`}>
+            {utilization >= 80 ? 'Tối ưu' : utilization >= 60 ? 'Tạm ổn' : 'Chưa tối ưu'}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  Demand pool — bảng editable
+// ======================================================================
+function DemandPool({ lines, onChange, onToggle, onRemove, onAdd }) {
+  const update = (id, field, value) => {
+    const newLines = lines.map(l => {
+      if (l.id !== id) return l;
+      const v = (field === 'sl' || field === 'bu_hao_sx' || field === 'length' ||
+                 field === 'width' || field === 'sp_to_in' || field === 'to_in_to_nguyen')
+        ? Number(value) || 0
+        : value;
+      return { ...l, [field]: v };
+    });
+    onChange(newLines);
+  };
+
+  return (
+    <div className="card">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">Demand Pool · từ Sales Order</span>
+      </div>
+      <h2 className="section-title">Các SP cần lên kế hoạch sản xuất</h2>
+      <div style={{overflowX:'auto'}}>
+        <table className="data">
+          <thead>
+            <tr>
+              <th style={{width:40}}>Ghép</th>
+              <th>Mã SP</th>
+              <th style={{minWidth:200}}>Tên SP</th>
+              <th>Khách hàng</th>
+              <th className="num">Dài (mm)</th>
+              <th className="num">Rộng (mm)</th>
+              <th className="num">SP/tờ in</th>
+              <th className="num">Tờ in/ tờ nguyên</th>
+              <th className="num">SL đặt</th>
+              <th className="num">Bù hao SX</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.map(l => (
+              <tr key={l.id} className={l.include ? 'selected' : ''}>
+                <td style={{textAlign:'center'}}>
+                  <input type="checkbox" checked={l.include} onChange={() => onToggle(l.id)} />
+                </td>
+                <td><input className="inline" value={l.ma} onChange={e => update(l.id, 'ma', e.target.value)} /></td>
+                <td><input className="inline" value={l.ten} onChange={e => update(l.id, 'ten', e.target.value)} /></td>
+                <td><input className="inline" value={l.khach} onChange={e => update(l.id, 'khach', e.target.value)} /></td>
+                <td className="num"><input className="inline num" type="number" value={l.length} onChange={e => update(l.id, 'length', e.target.value)} /></td>
+                <td className="num"><input className="inline num" type="number" value={l.width} onChange={e => update(l.id, 'width', e.target.value)} /></td>
+                <td className="num"><input className="inline num" type="number" value={l.sp_to_in} onChange={e => update(l.id, 'sp_to_in', e.target.value)} /></td>
+                <td className="num"><input className="inline num" type="number" value={l.to_in_to_nguyen} onChange={e => update(l.id, 'to_in_to_nguyen', e.target.value)} /></td>
+                <td className="num"><input className="inline num" type="number" value={l.sl} onChange={e => update(l.id, 'sl', e.target.value)} /></td>
+                <td className="num"><input className="inline num" type="number" value={l.bu_hao_sx} onChange={e => update(l.id, 'bu_hao_sx', e.target.value)} /></td>
+                <td><button className="btn-danger" onClick={() => onRemove(l.id)}>Xóa</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{marginTop:12, display:'flex', gap:8}}>
+        <button className="btn btn-ghost" onClick={onAdd}>+ Thêm SO line</button>
+      </div>
+      <div className="info-callout">
+        <strong>Gợi ý cải tiến so với NetSuite:</strong> Engine này có thể tự động đề xuất nhóm ghép bài
+        dựa trên kiểu in, thông số màu, loại giấy, và khổ nguyên tương thích — user chỉ cần confirm.
+        Demo hiện cho phép tick thủ công để anh dễ trình bày logic.
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  Parameters
+// ======================================================================
+function Parameters({ params, onChange, selectedLines }) {
+  const buHaoTotal = params.bu_hao_in_total;
+  const toInToNguyen = selectedLines[0]?.to_in_to_nguyen || 1;
+  return (
+    <div className="card-flat">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">Print Parameters</span>
+      </div>
+      <h2 className="section-title" style={{fontSize:16}}>Thông số in cho ghép bài</h2>
+      <div className="params-grid">
+        <div className="field">
+          <label>Khổ nguyên</label>
+          <select value={params.kho_nguyen} onChange={e => onChange({ ...params, kho_nguyen: e.target.value })}>
+            <option value="790x1090">790 × 1090 mm</option>
+            <option value="650x860">650 × 860 mm</option>
+            <option value="700x1000">700 × 1000 mm</option>
+          </select>
+        </div>
+        <div className="field">
+          <label>Máy in</label>
+          <select value={params.may_in} onChange={e => onChange({ ...params, may_in: e.target.value })}>
+            {MAY_IN_MASTER.map(m => <option key={m.code} value={m.code}>{m.name}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label>Thông số màu</label>
+          <select value={params.thong_so_mau} onChange={e => onChange({ ...params, thong_so_mau: e.target.value })}>
+            {THONG_SO_MAU.map(m => <option key={m.code} value={m.code}>{m.desc} ({m.so_kem} kẽm)</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label>Bù hao in tổng (tờ)</label>
+          <input type="number" value={buHaoTotal} onChange={e => onChange({ ...params, bu_hao_in_total: Number(e.target.value)||0 })} />
+        </div>
+      </div>
+      <div className="formula-box" style={{marginTop:14}}>
+        <strong>Cơ sở tính:</strong> Tờ in/tờ nguyên mặc định lấy từ SP đầu tiên trong ghép bài = <code>{toInToNguyen}</code>.
+        Nếu các SP có tờ in/tờ nguyên khác nhau, sẽ tính theo từng SP khi phân bổ.
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  Allocation table — kết quả phân bổ
+// ======================================================================
+function AllocationTable({ result }) {
+  if (result.lines.length === 0) {
+    return (
+      <div className="card">
+        <div className="section-tag">
+          <span className="section-tag-bar"></span>
+          <span className="section-tag-text">Calculation · Phân bổ NVL giấy in</span>
+        </div>
+        <h2 className="section-title">Kết quả phân bổ cho từng SP</h2>
+        <div className="warn-callout">Chưa có SP nào được chọn ghép bài. Tick checkbox ở Demand Pool để bắt đầu tính toán.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">Calculation · Phân bổ NVL giấy in</span>
+      </div>
+      <h2 className="section-title">Kết quả phân bổ cho từng SP (= BOM qty giấy trên Child PO)</h2>
+
+      <div style={{overflowX:'auto'}}>
+        <table className="data">
+          <thead>
+            <tr>
+              <th>Mã SP</th>
+              <th className="num">Diện tích khổ trải (mm²)</th>
+              <th className="num">SP/tờ in</th>
+              <th className="num">Weight (DT×SP/tờ)</th>
+              <th className="num">Tỷ lệ diện tích</th>
+              <th className="num">Tờ in cần (quy đổi)</th>
+              <th className="num">Bù hao in SP</th>
+              <th className="num">🎯 Tờ nguyên allocated</th>
+              <th className="num">SP trên sheet</th>
+              <th className="num">Planned scrap</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.lines.map(l => (
+              <tr key={l.id}>
+                <td><strong>{l.ma}</strong></td>
+                <td className="num">{l.dienTich.toLocaleString()}</td>
+                <td className="num">{l.sp_to_in}</td>
+                <td className="num">{l.weight.toLocaleString()}</td>
+                <td className="num">
+                  <span className="pill pill-info">{(l.tyLe * 100).toFixed(2)}%</span>
+                </td>
+                <td className="num">{l.toInCan.toLocaleString()}</td>
+                <td className="num">{l.bu_hao_in_sp.toFixed(2)}</td>
+                <td className="num" style={{background:'rgba(162,212,94,0.1)', fontWeight:600}}>
+                  {l.to_nguyen_sp_allocated.toFixed(2)}
+                </td>
+                <td className="num">{l.sp_physical_on_sheet.toLocaleString()}</td>
+                <td className="num">
+                  <span className={`pill ${l.planned_scrap === 0 ? 'pill-ok' : l.planned_scrap < l.sl*0.1 ? 'pill-warn' : 'pill-bad'}`}>
+                    {l.planned_scrap.toLocaleString()}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            <tr style={{background: 'var(--light-gray)', fontWeight:600}}>
+              <td colSpan={3}>Tổng</td>
+              <td className="num">{result.totalWeight.toLocaleString()}</td>
+              <td className="num">100.00%</td>
+              <td className="num">—</td>
+              <td className="num">{result.lines.reduce((s,l) => s+l.bu_hao_in_sp, 0).toFixed(2)}</td>
+              <td className="num" style={{background:'rgba(162,212,94,0.18)'}}>
+                {result.sumAllocated.toFixed(2)}
+              </td>
+              <td colSpan={2}></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className={Math.abs(result.variance) < 0.01 ? 'info-callout' : 'warn-callout'} style={{marginTop:14}}>
+        <strong>Kiểm tra cân đối:</strong> Tổng tờ nguyên allocated = {result.sumAllocated.toFixed(2)} /
+        Tờ nguyên vật lý = {result.toNguyenVatLy.toFixed(2)} →
+        Variance = <strong>{result.variance.toFixed(2)}</strong> tờ ({((result.variance/result.toNguyenVatLy)*100).toFixed(2)}%).
+        {Math.abs(result.variance) < 0.5
+          ? ' ✓ Cân đối tốt.'
+          : ' Variance này là hao phí ghép bài không tránh được, sẽ phát sinh scrap ở Child PO.'}
+      </div>
+
+      <div className="formula-box">
+        <strong>Công thức engine (phục hồi từ FS NetSuite V0.3):</strong><br/>
+        <code>Tỷ lệ_i = (DT_i × SP/tờ_i) / Σ(DT × SP/tờ)</code><br/>
+        <code>Bù hao in_i = Tỷ lệ_i × Bù hao in tổng</code><br/>
+        <code>Tờ nguyên allocated_i = (Tờ in cần_i × Tỷ lệ_i + Bù hao in_i) / (Tờ in/tờ nguyên)</code><br/>
+        <code>Tờ in vật lý = max(Tờ in cần) + Bù hao in tổng</code> &nbsp;→&nbsp; push MES / ghi Parent record
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  Sheet visualizer — SVG preview
+// ======================================================================
+function SheetVisualizer({ result, khoNguyen }) {
+  if (result.lines.length === 0) return null;
+
+  const [w, h] = khoNguyen.split('x').map(Number);
+  const scale = 400 / Math.max(w, h);
+  const sheetW = w * scale;
+  const sheetH = h * scale;
+
+  // Simple layout: fit each SP's rectangles across sheet based on their area ratio
+  const colors = ['#00586F', '#A2D45E', '#00D4FF', '#F59E0B', '#D32F2F', '#9C27B0', '#009688'];
+
+  // Naive placement: divide sheet into columns by ratio, show rectangles of SP size
+  let xOffset = 0;
+  const placements = result.lines.map((l, idx) => {
+    const colWidth = sheetW * l.tyLe;
+    const rectW = l.length * scale;
+    const rectH = l.width * scale;
+    const cols = Math.max(1, Math.floor(colWidth / rectW));
+    const rows = Math.max(1, Math.floor(sheetH / rectH));
+    const rects = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        rects.push({
+          x: xOffset + c * rectW + 1,
+          y: r * rectH + 1,
+          w: rectW - 2,
+          h: rectH - 2,
+        });
+      }
+    }
+    const seg = { rects, color: colors[idx % colors.length], label: l.ma, width: colWidth };
+    xOffset += colWidth;
+    return seg;
+  });
+
+  return (
+    <div className="card">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">Visual Preview · Sheet layout (minh họa)</span>
+      </div>
+      <h2 className="section-title" style={{fontSize:16}}>Minh họa bố trí SP trên khổ giấy {khoNguyen} mm</h2>
+      <div className="sheet-svg-wrap">
+        <svg className="sheet-svg" width={sheetW} height={sheetH} viewBox={`0 0 ${sheetW} ${sheetH}`}>
+          {placements.map((seg, idx) => (
+            <g key={idx}>
+              {seg.rects.map((r, j) => (
+                <rect key={j} x={r.x} y={r.y} width={r.w} height={r.h}
+                  fill={seg.color} opacity="0.75" stroke="#fff" strokeWidth="1" />
+              ))}
+            </g>
+          ))}
+        </svg>
+      </div>
+      <div className="legend-sap" style={{marginTop:12}}>
+        {placements.map((seg, idx) => (
+          <div key={idx} className="legend-item">
+            <div className="legend-dot" style={{background: seg.color}}></div>
+            <span><strong>{seg.label}</strong> · {(result.lines[idx].tyLe*100).toFixed(1)}%</span>
+          </div>
+        ))}
+      </div>
+      <div className="info-callout" style={{marginTop:10}}>
+        <strong>Lưu ý visual:</strong> Đây là minh họa khái niệm để KH hiểu nguyên lý phân chia diện tích.
+        Thiết kế ghép bài thực tế do designer bố trí bằng Esko/Illustrator, hệ thống SAP chỉ lưu kết quả
+        (SP/tờ in, tỷ lệ) chứ không vẽ lại.
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  SAP Preview — mô phỏng Parent CBO + Child PO
+// ======================================================================
+function SAPPreview({ result, params }) {
+  if (result.lines.length === 0) return null;
+
+  // Stable parent ID: chỉ đổi khi số lượng child / may_in / thong_so_mau / kho_nguyen đổi
+  const parentId = useMemo(
+    () => 'GR-' + String(Math.floor(100000 + Math.random()*900000)),
+    [result.lines.length, params.may_in, params.thong_so_mau, params.kho_nguyen]
+  );
+
+  const mayInObj = MAY_IN_MASTER.find(m => m.code === params.may_in) || {};
+  const mauObj = THONG_SO_MAU.find(m => m.code === params.thong_so_mau) || {};
+  const soKem = mauObj.so_kem || 0;
+
+  // Planned dates: hôm nay + 2 ngày (chỉ demo, không bắt tool thật)
+  const today = new Date();
+  const plus = (d, n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+  const fmtDate = (d) => `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+  const startDate = fmtDate(today);
+  const endDate = fmtDate(plus(today, 2));
+
+  // ----- Parent CBO (JSON cho technical view) -----
+  const parent = {
+    parent_order_id: parentId,
+    type: 'Gang-Run Parent (Custom Business Object)',
+    status: 'Released',
+    may_in: params.may_in,
+    kho_nguyen: params.kho_nguyen,
+    thong_so_mau: params.thong_so_mau,
+    so_kem: soKem,
+    to_in_vat_ly: Math.round(result.toInVatLy),
+    to_nguyen_vat_ly: Number(result.toNguyenVatLy.toFixed(2)),
+    bu_hao_in_total: params.bu_hao_in_total,
+    num_children: result.lines.length,
+  };
+
+  const children = result.lines.map((l, idx) => ({
+    child_po: `PO-${parentId}-${String(idx+1).padStart(2,'0')}`,
+    material: l.ma,
+    order_qty: l.sl,
+    unit: 'EA',
+    parent_ghep_bai_id: parentId,
+    prt_khuon: `KHUON-${l.ma}`,
+    prt_kem: `KEM-${params.thong_so_mau}`,
+    component_giay_in: {
+      material: `GIAY-${params.kho_nguyen}`,
+      bom_qty_override: Number(l.to_nguyen_sp_allocated.toFixed(4)),
+      unit: 'TO'
+    },
+    planned_scrap_qty: Math.round(l.planned_scrap),
+    custom_fields: {
+      ty_le_dien_tich: Number((l.tyLe*100).toFixed(2)),
+      bu_hao_in_allocated: Number(l.bu_hao_in_sp.toFixed(2)),
+      to_in_quy_doi: l.toInCan,
+    }
+  }));
+
+  const parentJson = JSON.stringify(parent, null, 2);
+  const childJson = JSON.stringify(children, null, 2);
+
+  return (
+    <div className="card">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">SAP Integration Preview</span>
+      </div>
+      <h2 className="section-title">Production Orders được tạo từ kết quả ghép bài</h2>
+
+      {/* ===================== BUSINESS-FRIENDLY VIEW ===================== */}
+      <div className="po-section-divider">
+        <span className="lbl">Business View · Fiori-style</span>
+        <span className="line"></span>
+      </div>
+
+      {/* Parent Gang-Run Order — object page header */}
+      <div className="po-header-card">
+        <div className="po-header-top">
+          <div className="po-id-block">
+            <div className="po-type">Gang-Run Parent Order · Custom Business Object</div>
+            <div className="po-id">{parentId}</div>
+            <div className="po-desc">
+              Lệnh ghép bài cho <strong>{result.lines.length} sản phẩm</strong> · Máy in: <strong>{mayInObj.name || params.may_in}</strong>
+            </div>
+          </div>
+          <div className="po-header-badges">
+            <span className="pill pill-ok">● Released</span>
+            <span className="pill pill-info">Order Type: ZGR1</span>
+            <span className="pill pill-info">Plant: ITP01</span>
+          </div>
+        </div>
+
+        <div className="po-meta-grid">
+          <div className="po-meta">
+            <div className="po-meta-label">Máy in (Work Center)</div>
+            <div className="po-meta-value">{mayInObj.name || params.may_in}</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Khổ giấy nguyên</div>
+            <div className="po-meta-value">{params.kho_nguyen} <span style={{fontSize:'11px',color:'var(--medium-gray)',fontWeight:400}}>mm</span></div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Thông số màu</div>
+            <div className="po-meta-value">{mauObj.desc || params.thong_so_mau}</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Số kẽm (PRT)</div>
+            <div className="po-meta-value"><span className="accent-num">{soKem}</span> <span style={{fontSize:'11px',color:'var(--medium-gray)',fontWeight:400}}>kẽm</span></div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Planned Start</div>
+            <div className="po-meta-value">{startDate}</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Planned End</div>
+            <div className="po-meta-value">{endDate}</div>
+          </div>
+
+          <div className="po-meta">
+            <div className="po-meta-label">Tờ in vật lý</div>
+            <div className="po-meta-value"><span className="accent-num">{Math.round(result.toInVatLy).toLocaleString()}</span> <span style={{fontSize:'11px',color:'var(--medium-gray)',fontWeight:400}}>tờ</span></div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Tờ nguyên vật lý</div>
+            <div className="po-meta-value"><span className="accent-num">{result.toNguyenVatLy.toFixed(2)}</span> <span style={{fontSize:'11px',color:'var(--medium-gray)',fontWeight:400}}>tờ</span></div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Bù hao in (gộp)</div>
+            <div className="po-meta-value"><span className="accent-num">{params.bu_hao_in_total.toLocaleString()}</span> <span style={{fontSize:'11px',color:'var(--medium-gray)',fontWeight:400}}>tờ</span></div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Utilization</div>
+            <div className="po-meta-value"><span className="accent-num">{result.utilization.toFixed(1)}</span>%</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Child POs</div>
+            <div className="po-meta-value"><span className="accent-num">{result.lines.length}</span> <span style={{fontSize:'11px',color:'var(--medium-gray)',fontWeight:400}}>lệnh</span></div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Created By / On</div>
+            <div className="po-meta-value" style={{fontSize:'12.5px'}}>PP Planner · {startDate}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Child POs — readable table */}
+      <div className="po-children-wrap">
+        <div className="po-children-head">
+          <span>▸ Child Production Orders · Standard SAP Production Order</span>
+          <span className="count">{result.lines.length} PO</span>
+        </div>
+        <table className="data po-children">
+          <thead>
+            <tr>
+              <th style={{width:'15%'}}>Child PO</th>
+              <th style={{width:'22%'}}>Thành phẩm (Material)</th>
+              <th style={{width:'11%'}}>Khách hàng</th>
+              <th className="num" style={{width:'9%'}}>Order Qty</th>
+              <th style={{width:'20%'}}>Component giấy in</th>
+              <th style={{width:'13%'}}>PRT (khuôn · kẽm)</th>
+              <th className="num" style={{width:'10%'}}>Planned Scrap</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.lines.map((l, idx) => {
+              const childPo = `PO-${parentId}-${String(idx+1).padStart(2,'0')}`;
+              return (
+                <tr key={childPo}>
+                  <td>
+                    <div className="po-child-id">{childPo}</div>
+                    <div style={{fontSize:'10.5px',color:'var(--medium-gray)',marginTop:'2px'}}>
+                      <span className="pill pill-ok" style={{fontSize:'9.5px',padding:'1px 6px'}}>Released</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="po-mat-code">{l.ma}</div>
+                    <div className="po-mat-desc">{l.ten}</div>
+                  </td>
+                  <td style={{fontSize:'11.5px'}}>{l.khach}</td>
+                  <td className="num">
+                    <strong>{l.sl.toLocaleString()}</strong>
+                    <div style={{fontSize:'10.5px',color:'var(--medium-gray)'}}>EA</div>
+                  </td>
+                  <td>
+                    <div className="po-comp-line">
+                      <span className="code">GIAY-{params.kho_nguyen}</span>
+                    </div>
+                    <div className="po-comp-line" style={{marginTop:'2px'}}>
+                      <strong>{l.to_nguyen_sp_allocated.toFixed(2)}</strong> <span style={{color:'var(--medium-gray)'}}>TO</span>
+                      <span className="override">BOM override</span>
+                    </div>
+                    <div className="po-comp-line" style={{color:'var(--medium-gray)',fontSize:'10.5px',marginTop:'2px'}}>
+                      Tỷ lệ diện tích: {(l.tyLe*100).toFixed(2)}% · Bù hao: {l.bu_hao_in_sp.toFixed(1)} tờ
+                    </div>
+                  </td>
+                  <td>
+                    <div className="po-prt-line"><span className="tag">KHUÔN</span>{l.ma}</div>
+                    <div className="po-prt-line" style={{marginTop:'3px'}}><span className="tag">KẼM</span>{params.thong_so_mau}</div>
+                  </td>
+                  <td className="num">
+                    <strong>{Math.round(l.planned_scrap).toLocaleString()}</strong>
+                    <div style={{fontSize:'10.5px',color:'var(--medium-gray)'}}>EA (phế)</div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="info-callout">
+        <strong>Cách đọc:</strong> Parent Gang-Run Order là một <em>Custom Business Object</em> — không tạo Production Order chuẩn, chỉ gom nhóm và truyền thông tin xuống MES.
+        Mỗi Child PO là <em>Production Order chuẩn SAP</em> — có BOM, Routing, Costing, Settlement riêng về từng Material thành phẩm.
+        Component giấy in trên mỗi Child PO được <strong>override số lượng</strong> theo kết quả phân bổ ghép bài (không dùng BOM qty mặc định).
+      </div>
+
+      {/* ===================== TECHNICAL JSON VIEW ===================== */}
+      <div className="po-section-divider" style={{marginTop:'22px'}}>
+        <span className="lbl">Technical Payload · SAP API Integration</span>
+        <span className="line"></span>
+      </div>
+
+      <div className="legend-sap">
+        <div className="legend-item"><div className="legend-dot" style={{background:'var(--peacock)'}}></div><span>Custom Business Object (RAP)</span></div>
+        <div className="legend-item"><div className="legend-dot" style={{background:'var(--lime)'}}></div><span>Standard Production Order (A2X API)</span></div>
+        <div className="legend-item"><div className="legend-dot" style={{background:'var(--cyan)'}}></div><span>Override BOM Quantity (custom logic)</span></div>
+      </div>
+
+      <div className="two-col">
+        <div>
+          <h4 style={{margin:'0 0 8px 0', color:'var(--peacock)'}}>▸ Parent CBO payload</h4>
+          <pre className="json-view">{parentJson}</pre>
+          <div className="info-callout">
+            Payload gửi vào <code>ZGangRunOrder</code> (CBO dựng bằng RAP/ABAP Cloud). Không trigger Production Order chuẩn.
+          </div>
+        </div>
+        <div>
+          <h4 style={{margin:'0 0 8px 0', color:'var(--peacock)'}}>▸ Child POs payload</h4>
+          <pre className="json-view">{childJson}</pre>
+          <div className="info-callout">
+            Gọi A2X API <code>API_PRODUCTION_ORDER_2</code> tạo Production Order chuẩn.
+            BOM <code>component_giay_in.bom_qty_override</code> thay cho qty mặc định từ Material Master.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  App
+// ======================================================================
+function App() {
+  const [demand, setDemand] = useState(SEED_DEMAND);
+  const [params, setParams] = useState({
+    kho_nguyen: '790x1090',
+    may_in: 'FAM000643',
+    thong_so_mau: 'CMYK_CMYK',
+    bu_hao_in_total: 200,
+  });
+
+  const selectedLines = demand.filter(l => l.include);
+
+  const result = useMemo(() => {
+    if (selectedLines.length === 0) {
+      return {
+        lines: [], totalWeight: 0, maxToInCan: 0, toInVatLy: 0,
+        toNguyenVatLy: 0, sumAllocated: 0, variance: 0, utilization: 0,
+        totalAreaDemand: 0, totalAreaPotential: 0,
+      };
+    }
+    const toInToNguyen = selectedLines[0].to_in_to_nguyen || 1;
+    return computeGangRun(selectedLines, params.bu_hao_in_total, toInToNguyen);
+  }, [demand, params]);
+
+  const toggleInclude = (id) => {
+    setDemand(demand.map(l => l.id === id ? { ...l, include: !l.include } : l));
+  };
+  const removeLine = (id) => {
+    setDemand(demand.filter(l => l.id !== id));
+  };
+  const addLine = () => {
+    const newId = 'SO' + String(demand.length + 1).padStart(3, '0');
+    setDemand([...demand, {
+      id: newId, ma: `SP-NEW-${demand.length+1}`, ten: 'Sản phẩm mới', khach: 'Khách hàng mới',
+      length: 200, width: 300, sp_to_in: 4, to_in_to_nguyen: 1,
+      kho_nguyen: '790x1090', kho_in: '395x520',
+      sl: 5000, bu_hao_sx: 150, thong_so_mau: 'CMYK_CMYK', kieu_in: 'Offset', include: true,
+    }]);
+  };
+
+  return (
+    <div>
+      <Header />
+      <div className="main-container">
+
+        <KPIBar result={result} selectedCount={selectedLines.length} />
+
+        <DemandPool
+          lines={demand}
+          onChange={setDemand}
+          onToggle={toggleInclude}
+          onRemove={removeLine}
+          onAdd={addLine}
+        />
+
+        <Parameters
+          params={params}
+          onChange={setParams}
+          selectedLines={selectedLines}
+        />
+
+        <AllocationTable result={result} />
+
+        <SheetVisualizer result={result} khoNguyen={params.kho_nguyen} />
+
+        <SAPPreview result={result} params={params} />
+
+        <div className="card-flat">
+          <details>
+            <summary>Giải thích architecture cho KH (click để mở)</summary>
+            <div style={{marginTop:12, lineHeight:1.7}}>
+              <p><strong style={{color:'var(--peacock)'}}>1. Layer chuẩn SAP S/4HANA Public Cloud:</strong></p>
+              <ul>
+                <li><strong>Sales Order</strong> — nguồn demand, không custom</li>
+                <li><strong>Material Master</strong> + custom fields (khổ trải, kiểu in, SP/tờ in) qua Key User Extensibility</li>
+                <li><strong>BOM & Routing</strong> — chuẩn, nhưng BOM qty giấy in bị override ở PO khi ghép bài</li>
+                <li><strong>Production Order</strong> — Child PO = PO chuẩn, tạo qua A2X API từ tool ghép bài</li>
+                <li><strong>PRT (Production Resource/Tool)</strong> — dùng cho kẽm + khuôn, chuẩn SAP</li>
+                <li><strong>Work Center</strong> — máy in, chuẩn SAP</li>
+                <li><strong>Settlement & Costing</strong> — đi theo từng Child PO, chuẩn SAP, không custom</li>
+              </ul>
+              <p><strong style={{color:'var(--peacock)'}}>2. Layer custom (trên Developer Extensibility — RAP / ABAP Cloud):</strong></p>
+              <ul>
+                <li><strong>Packaging Planning Worksheet</strong> (Custom Fiori app) — tool này chính là UI mockup</li>
+                <li><strong>Parent CBO "Gang-Run Order"</strong> — gom Child POs, lưu thông tin in chung</li>
+                <li><strong>Allocation Engine</strong> — tính tỷ lệ diện tích + override BOM qty</li>
+                <li><strong>Mapping CBOs</strong> — Thông số màu, Số con/Khổ nguyên (không có sẵn chuẩn)</li>
+                <li><strong>Integration với MES</strong> — push parent info, nhận confirmation, phân bổ GI giấy</li>
+              </ul>
+              <p><strong style={{color:'var(--peacock)'}}>3. Điểm khác biệt so với NetSuite:</strong></p>
+              <ul>
+                <li>Gộp 3 tầng SPTK → LTK → LSX thành 2 tầng PPW → PO (đơn giản hơn)</li>
+                <li>Có KPI utilization & variance → đo lường chất lượng ghép bài theo thời gian</li>
+                <li>Tận dụng PRT chuẩn cho kẽm/khuôn thay vì mapping thủ công như NetSuite</li>
+                <li>Costing tự động qua SAP settlement, không cần custom allocation FI</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+
+        <div className="gi-bar">
+          <div className="gi-blue"></div>
+          <div className="gi-green"></div>
+        </div>
+        <div className="foot-note">
+          <strong>Citek ▸</strong> Gang-Run Printing Calculator · ITP Presales Demo ·
+          SAP S/4HANA Public Cloud + Developer Extensibility (RAP)
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
