@@ -900,9 +900,9 @@ function DemandPool({ lines, onChange, onToggle, onRemove, onAdd }) {
         <button className="btn btn-ghost" onClick={onAdd}>+ Thêm SO line</button>
       </div>
       <div className="info-callout">
-        <strong>Gợi ý cải tiến so với NetSuite:</strong> Engine này có thể tự động đề xuất nhóm ghép bài
+        <strong>Định hướng tự động hoá:</strong> Engine có thể tự động đề xuất nhóm ghép bài
         dựa trên kiểu in, thông số màu, loại giấy, và khổ nguyên tương thích — user chỉ cần confirm.
-        Demo hiện cho phép tick thủ công để anh dễ trình bày logic.
+        Demo hiện cho phép tick thủ công để dễ trình bày logic.
       </div>
     </div>
   );
@@ -1044,7 +1044,7 @@ function AllocationTable({ result }) {
       </div>
 
       <div className="formula-box">
-        <strong>Công thức engine (phục hồi từ FS NetSuite V0.3):</strong><br/>
+        <strong>Công thức engine ghép bài:</strong><br/>
         <code>Tỷ lệ_i = (DT_i × SP/tờ_i) / Σ(DT × SP/tờ)</code><br/>
         <code>Bù hao in_i = Tỷ lệ_i × Bù hao in tổng</code><br/>
         <code>Tờ nguyên allocated_i = (Tờ in cần_i × Tỷ lệ_i + Bù hao in_i) / (Tờ in/tờ nguyên)</code><br/>
@@ -1469,12 +1469,12 @@ function App() {
                 <li><strong>Mapping CBOs</strong> — Thông số màu, Số con/Khổ nguyên (không có sẵn chuẩn)</li>
                 <li><strong>Integration với MES</strong> — push parent info, nhận confirmation, phân bổ GI giấy</li>
               </ul>
-              <p><strong style={{color:'var(--peacock)'}}>3. Điểm khác biệt so với NetSuite:</strong></p>
+              <p><strong style={{color:'var(--peacock)'}}>3. Đặc điểm thiết kế:</strong></p>
               <ul>
-                <li>Gộp 3 tầng SPTK → LTK → LSX thành 2 tầng PPW → PO (đơn giản hơn)</li>
-                <li>Có KPI utilization & variance → đo lường chất lượng ghép bài theo thời gian</li>
-                <li>Tận dụng PRT chuẩn cho kẽm/khuôn thay vì mapping thủ công như NetSuite</li>
-                <li>Costing tự động qua SAP settlement, không cần custom allocation FI</li>
+                <li>Cấu trúc 2 tầng PPW → Production Order, gọn và dễ vận hành</li>
+                <li>KPI utilization & variance — đo lường chất lượng ghép bài theo thời gian</li>
+                <li>Tận dụng PRT chuẩn cho kẽm/khuôn — không cần mapping thủ công</li>
+                <li>Costing tự động qua SAP Settlement, không cần custom allocation FI</li>
               </ul>
             </div>
           </details>
