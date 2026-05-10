@@ -349,6 +349,91 @@
   .pill-bad { background: rgba(211,47,47,0.12); color: var(--danger); }
   .pill-info { background: rgba(0,88,111,0.08); color: var(--peacock); }
 
+  /* Paper Selection (corrugation) */
+  .paper-layer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .paper-layer {
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 14px 16px;
+    border-top: 3px solid var(--peacock);
+  }
+  .paper-layer.is-song {
+    border-top-color: var(--cyan);
+    background: linear-gradient(180deg, rgba(0,212,255,0.04) 0%, var(--white) 40%);
+  }
+  .paper-layer.is-mat {
+    border-top-color: var(--peacock);
+    background: linear-gradient(180deg, rgba(0,88,111,0.04) 0%, var(--white) 40%);
+  }
+  .paper-layer-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .paper-layer-num {
+    background: var(--peacock);
+    color: var(--white);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .paper-layer.is-song .paper-layer-num { background: var(--cyan); color: var(--peacock-dark); }
+  .paper-layer-role {
+    font-weight: 600;
+    color: var(--peacock);
+    font-size: 13px;
+  }
+  .paper-layer-spec {
+    font-size: 11.5px;
+    color: var(--medium-gray);
+    margin-bottom: 4px;
+  }
+  .paper-layer-info {
+    margin-top: 10px;
+    background: var(--light-gray);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+  .paper-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    border-bottom: 1px dashed rgba(0,0,0,0.06);
+  }
+  .paper-info-row:last-child { border-bottom: none; }
+  .paper-info-row.paper-info-need {
+    background: rgba(0,88,111,0.05);
+    margin: 4px -10px -8px -10px;
+    padding: 6px 10px;
+    border-radius: 0 0 6px 6px;
+  }
+  .paper-info-label {
+    color: var(--medium-gray);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-weight: 500;
+  }
+  .paper-info-val {
+    color: var(--dark-gray);
+    font-weight: 600;
+    text-align: right;
+  }
+  .paper-info-val.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+  }
+
   /* Business-friendly Production Order view */
   .po-section-divider {
     display: flex;
@@ -657,7 +742,7 @@
 <div id="root"></div>
 
 <script type="text/babel" data-presets="react">
-const { useState, useMemo } = React;
+const { useState, useMemo, useEffect } = React;
 
 // ======================================================================
 //  CITEK Branding components
@@ -1448,24 +1533,65 @@ const CAU_TRUC_MASTER = {
 // 5 SP carton mẫu — chia 2 group cấu trúc khác nhau
 const SEED_DEMAND_SONG = [
   // Group A — 3 lớp B-flute (có thể ghép trên máy 2200)
-  { id:'CRG001', ma:'CTN-SS-55', ten:'Carton TV Samsung 55"', khach:'Samsung VN',
+  { id:'CRG001', so_number:'SO-2026-0142', so_item:10, ma:'CTN-SS-55', ten:'Carton TV Samsung 55"', khach:'Samsung VN',
     length:1280, width:780, height:200,
     cau_truc:'3L_B_K200_M125_K150', sl:1500, bu_hao_sx:50, include:true },
-  { id:'CRG002', ma:'CTN-SS-65', ten:'Carton TV Samsung 65"', khach:'Samsung VN',
+  { id:'CRG002', so_number:'SO-2026-0142', so_item:20, ma:'CTN-SS-65', ten:'Carton TV Samsung 65"', khach:'Samsung VN',
     length:1500, width:920, height:220,
     cau_truc:'3L_B_K200_M125_K150', sl:1200, bu_hao_sx:40, include:true },
-  { id:'CRG003', ma:'CTN-FV-DSP', ten:'Hộp display dược FV', khach:'FV Hospital',
+  { id:'CRG003', so_number:'SO-2026-0156', so_item:10, ma:'CTN-FV-DSP', ten:'Hộp display dược FV', khach:'FV Hospital',
     length:850, width:480, height:180,
     cau_truc:'3L_B_K200_M125_K150', sl:2200, bu_hao_sx:80, include:false },
 
   // Group B — 5 lớp BC-flute (xuất khẩu)
-  { id:'CRG004', ma:'CTN-DLH-5', ten:'Carton xuất khẩu Dalat Hasfarm 5kg', khach:'Dalat Hasfarm',
+  { id:'CRG004', so_number:'SO-2026-0178', so_item:10, ma:'CTN-DLH-5', ten:'Carton xuất khẩu Dalat Hasfarm 5kg', khach:'Dalat Hasfarm',
     length:600, width:400, height:200,
     cau_truc:'5L_BC_K200_M125_T160_M125_K200', sl:3000, bu_hao_sx:100, include:false },
-  { id:'CRG005', ma:'CTN-DLH-10', ten:'Carton xuất khẩu Dalat Hasfarm 10kg', khach:'Dalat Hasfarm',
+  { id:'CRG005', so_number:'SO-2026-0178', so_item:20, ma:'CTN-DLH-10', ten:'Carton xuất khẩu Dalat Hasfarm 10kg', khach:'Dalat Hasfarm',
     length:700, width:500, height:280,
     cau_truc:'5L_BC_K200_M125_T160_M125_K200', sl:2500, bu_hao_sx:90, include:false },
 ];
+
+// Master cuộn giấy nguyên liệu (Material Master + Stock)
+// Mỗi entry = 1 Material code cụ thể với khổ rộng cố định
+const GIAY_NGUYEN_LIEU = {
+  // Kraft mặt
+  'K200-1600-VN':  { code:'K200-1600-VN',  name:'Kraft 200 gsm · Khổ 1600mm · VN',    gsm:200, kho_rong:1600, type:'mat',  supplier:'Bao Bì Sài Gòn',   ton_kho_kg:5400, batch:'BBSG-2026-04A' },
+  'K200-2200-IDN': { code:'K200-2200-IDN', name:'Kraft 200 gsm · Khổ 2200mm · IDN',   gsm:200, kho_rong:2200, type:'mat',  supplier:'Indah Kiat',       ton_kho_kg:8800, batch:'IK-2026-12B'    },
+  'K200-2500-VN':  { code:'K200-2500-VN',  name:'Kraft 200 gsm · Khổ 2500mm · VN',    gsm:200, kho_rong:2500, type:'mat',  supplier:'Vina Kraft',       ton_kho_kg:6200, batch:'VK-2026-08C'    },
+  'K150-1600-VN':  { code:'K150-1600-VN',  name:'Kraft 150 gsm · Khổ 1600mm · VN',    gsm:150, kho_rong:1600, type:'mat',  supplier:'Bao Bì Sài Gòn',   ton_kho_kg:4500, batch:'BBSG-2026-05A' },
+  'K150-2200-VN':  { code:'K150-2200-VN',  name:'Kraft 150 gsm · Khổ 2200mm · VN',    gsm:150, kho_rong:2200, type:'mat',  supplier:'Vina Kraft',       ton_kho_kg:7100, batch:'VK-2026-09B'    },
+  // Test mặt giữa
+  'T160-2200-CN':  { code:'T160-2200-CN',  name:'Test 160 gsm · Khổ 2200mm · CN',     gsm:160, kho_rong:2200, type:'mat',  supplier:'Nine Dragons',     ton_kho_kg:5000, batch:'ND-2026-11A'    },
+  'T140-1600-VN':  { code:'T140-1600-VN',  name:'Test 140 gsm · Khổ 1600mm · VN',     gsm:140, kho_rong:1600, type:'mat',  supplier:'Vina Kraft',       ton_kho_kg:3800, batch:'VK-2026-07A'    },
+  // Medium sóng
+  'M125-1600-VN':  { code:'M125-1600-VN',  name:'Medium 125 gsm · Khổ 1600mm · VN',   gsm:125, kho_rong:1600, type:'song', supplier:'Vina Kraft',       ton_kho_kg:6500, batch:'VK-2026-10A'    },
+  'M125-2200-IDN': { code:'M125-2200-IDN', name:'Medium 125 gsm · Khổ 2200mm · IDN',  gsm:125, kho_rong:2200, type:'song', supplier:'Indah Kiat',       ton_kho_kg:9200, batch:'IK-2026-13C'    },
+  'M115-2200-VN':  { code:'M115-2200-VN',  name:'Medium 115 gsm · Khổ 2200mm · VN',   gsm:115, kho_rong:2200, type:'song', supplier:'Vina Kraft',       ton_kho_kg:5800, batch:'VK-2026-11B'    },
+};
+
+// Helper: trả về list cuộn giấy phù hợp cho 1 layer (cùng gsm + cùng type + đủ khổ rộng)
+function getAvailablePapers(layerCode, khoYeuCauMm) {
+  const ref = GIAY_LOAI_MASTER[layerCode];
+  if (!ref) return [];
+  return Object.values(GIAY_NGUYEN_LIEU).filter(p =>
+    p.gsm === ref.gsm &&
+    p.type === ref.type &&
+    (!khoYeuCauMm || p.kho_rong >= khoYeuCauMm)
+  ).sort((a, b) => a.kho_rong - b.kho_rong); // nhỏ trước (tối ưu tồn kho)
+}
+
+// Helper: chọn giấy mặc định cho 1 cấu trúc (cuộn nhỏ nhất đủ rộng)
+function pickDefaultPapers(cauTrucCode, khoNgangSuDung) {
+  const ct = CAU_TRUC_MASTER[cauTrucCode];
+  if (!ct) return {};
+  const out = {};
+  ct.layers.forEach((ly, idx) => {
+    const opts = getAvailablePapers(ly.code, khoNgangSuDung);
+    if (opts.length > 0) out[idx] = opts[0].code;
+  });
+  return out;
+}
 
 // ======================================================================
 //  Engine ghép bài sóng
@@ -1520,19 +1646,28 @@ function computeCorrugation(lines, params) {
     // Phế: SP cần ít hơn → vẫn chiếm width nhưng dư mét dài
     const phePhamM2 = ((metDaiVatLy - l.metCanSP) * l.width) / 1000;
 
-    // BOM giấy phân bổ cho SP này (kg)
-    const bom = cauTruc.layers.map(layer => {
-      const giay = GIAY_LOAI_MASTER[layer.code];
+    // BOM giấy phân bổ cho SP này (kg) — trỏ vào Material code thực tế đã chọn
+    const bom = cauTruc.layers.map((layer, idx) => {
+      const selectedCode = params.selected_papers && params.selected_papers[idx];
+      const giayActual = selectedCode ? GIAY_NGUYEN_LIEU[selectedCode] : null;
+      const giayRef = GIAY_LOAI_MASTER[layer.code];
+      const gsm = giayActual ? giayActual.gsm : giayRef.gsm;
       const isSong = !!layer.flute;
       const takeUp = isSong ? SONG_TYPE_MASTER[layer.flute].take_up : 1.0;
       // Phân bổ theo tỷ lệ × tổng diện tích chạy
       const dienTichPhanBoM2 = tyLe * tongDienTichRunM2;
-      const kg = (dienTichPhanBoM2 * giay.gsm * takeUp) / 1000;
+      const kg = (dienTichPhanBoM2 * gsm * takeUp) / 1000;
       return {
-        material: `GIAY-${layer.code}`,
+        layer_idx: idx,
         layer_code: layer.code,
+        material: giayActual ? giayActual.code : `GIAY-${layer.code}`,
+        material_name: giayActual ? giayActual.name : `Giấy ${layer.code} (chưa chọn cuộn)`,
+        supplier: giayActual ? giayActual.supplier : '—',
+        batch: giayActual ? giayActual.batch : '—',
+        kho_rong_cuon: giayActual ? giayActual.kho_rong : null,
+        ton_kho_kg: giayActual ? giayActual.ton_kho_kg : null,
         role: layer.role,
-        gsm: giay.gsm,
+        gsm,
         take_up: takeUp,
         is_song: isSong,
         dien_tich_m2: dienTichPhanBoM2,
@@ -1638,6 +1773,7 @@ function DemandPoolSong({ lines, onChange, onToggle, onRemove, onAdd }) {
           <thead>
             <tr>
               <th style={{width:'48px'}}>Ghép</th>
+              <th>Sales Order</th>
               <th>Mã SP</th>
               <th>Tên SP</th>
               <th>Khách hàng</th>
@@ -1654,6 +1790,18 @@ function DemandPoolSong({ lines, onChange, onToggle, onRemove, onAdd }) {
             {lines.map(l => (
               <tr key={l.id} className={l.include ? 'selected' : ''}>
                 <td><input type="checkbox" checked={l.include} onChange={() => onToggle(l.id)} /></td>
+                <td>
+                  <div style={{display:'flex', flexDirection:'column', gap:'2px'}}>
+                    <input type="text" className="inline" value={l.so_number || ''}
+                      onChange={e => updateField(l.id, 'so_number', e.target.value)}
+                      style={{minWidth:'120px', fontFamily:"'JetBrains Mono', monospace", fontSize:'11.5px'}} />
+                    <span style={{fontSize:'10.5px', color:'var(--medium-gray)'}}>
+                      Item <input type="number" className="inline" value={l.so_item || 10}
+                        onChange={e => updateField(l.id, 'so_item', +e.target.value)}
+                        style={{width:'48px', fontSize:'10.5px', padding:'1px 4px'}} />
+                    </span>
+                  </div>
+                </td>
                 <td><input type="text" className="inline" value={l.ma} onChange={e => updateField(l.id, 'ma', e.target.value)} /></td>
                 <td><input type="text" className="inline" value={l.ten} onChange={e => updateField(l.id, 'ten', e.target.value)} /></td>
                 <td><input type="text" className="inline" value={l.khach} onChange={e => updateField(l.id, 'khach', e.target.value)} /></td>
@@ -1750,6 +1898,123 @@ function ParametersSong({ params, onChange, selectedLines }) {
 }
 
 // ======================================================================
+//  Paper Selection — Sóng (chọn cuộn giấy nguyên liệu thực tế cho từng layer)
+// ======================================================================
+function PaperSelectionSong({ result, selectedPapers, onChange }) {
+  if (result.empty || result.lines.length === 0 || result.error) return null;
+
+  const cauTruc = result.cauTruc;
+  const khoYeuCau = result.khoNgangSuDung;
+
+  // Tổng kg cần cho từng layer = sum BOM kg theo layer_idx
+  const totalKgPerLayer = {};
+  result.lines.forEach(l => {
+    l.bom.forEach(b => {
+      totalKgPerLayer[b.layer_idx] = (totalKgPerLayer[b.layer_idx] || 0) + b.kg;
+    });
+  });
+
+  return (
+    <div className="card">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">Material Selection · Cuộn giấy nguyên liệu</span>
+      </div>
+      <h2 className="section-title">Chọn cuộn giấy thực tế cho từng lớp ({cauTruc.so_lop} lớp)</h2>
+
+      <div className="paper-layer-grid">
+        {cauTruc.layers.map((layer, idx) => {
+          const opts = getAvailablePapers(layer.code, khoYeuCau);
+          const selectedCode = selectedPapers[idx];
+          const selectedObj = selectedCode ? GIAY_NGUYEN_LIEU[selectedCode] : null;
+          const kgCan = totalKgPerLayer[idx] || 0;
+          const isSong = !!layer.flute;
+          const stockShortage = selectedObj && (selectedObj.ton_kho_kg < kgCan);
+
+          return (
+            <div key={idx} className={`paper-layer ${isSong ? 'is-song' : 'is-mat'}`}>
+              <div className="paper-layer-head">
+                <span className="paper-layer-num">L{idx+1}</span>
+                <span className="paper-layer-role">{layer.role}</span>
+                {isSong && <span className="pill pill-info" style={{marginLeft:'auto'}}>Sóng {layer.flute}</span>}
+                {!isSong && <span className="pill pill-ok" style={{marginLeft:'auto'}}>Mặt</span>}
+              </div>
+              <div className="paper-layer-spec">
+                Yêu cầu: <strong>{layer.code}</strong> · {GIAY_LOAI_MASTER[layer.code]?.gsm}gsm · Khổ ≥ {khoYeuCau}mm
+              </div>
+              <select
+                value={selectedCode || ''}
+                onChange={e => onChange({ ...selectedPapers, [idx]: e.target.value })}
+                style={{marginTop:'8px'}}
+              >
+                <option value="">— Chọn cuộn giấy —</option>
+                {opts.length === 0 && <option disabled>Không có cuộn nào đủ khổ</option>}
+                {opts.map(p => (
+                  <option key={p.code} value={p.code}>
+                    {p.code} · {p.kho_rong}mm · {p.supplier} · Tồn {p.ton_kho_kg.toLocaleString()}kg
+                  </option>
+                ))}
+              </select>
+
+              {selectedObj && (
+                <div className="paper-layer-info">
+                  <div className="paper-info-row">
+                    <span className="paper-info-label">Material</span>
+                    <span className="paper-info-val mono">{selectedObj.code}</span>
+                  </div>
+                  <div className="paper-info-row">
+                    <span className="paper-info-label">Supplier</span>
+                    <span className="paper-info-val">{selectedObj.supplier}</span>
+                  </div>
+                  <div className="paper-info-row">
+                    <span className="paper-info-label">Batch</span>
+                    <span className="paper-info-val mono">{selectedObj.batch}</span>
+                  </div>
+                  <div className="paper-info-row">
+                    <span className="paper-info-label">Khổ rộng cuộn</span>
+                    <span className="paper-info-val">{selectedObj.kho_rong.toLocaleString()}mm</span>
+                  </div>
+                  <div className="paper-info-row">
+                    <span className="paper-info-label">Tồn kho</span>
+                    <span className="paper-info-val">{selectedObj.ton_kho_kg.toLocaleString()} kg</span>
+                  </div>
+                  <div className="paper-info-row paper-info-need">
+                    <span className="paper-info-label">Cần cho lệnh này</span>
+                    <span className="paper-info-val">
+                      <strong style={{color: stockShortage ? 'var(--danger)' : 'var(--peacock)'}}>
+                        {kgCan.toFixed(2)} kg
+                      </strong>
+                      {isSong && <span style={{fontSize:'10.5px', color:'var(--medium-gray)', marginLeft:'4px'}}>
+                        (×{SONG_TYPE_MASTER[layer.flute].take_up} take-up)
+                      </span>}
+                    </span>
+                  </div>
+                  {stockShortage && (
+                    <div className="warn-callout" style={{marginTop:'6px', padding:'6px 10px', fontSize:'11.5px'}}>
+                      ⚠ Tồn kho không đủ — thiếu {(kgCan - selectedObj.ton_kho_kg).toFixed(2)} kg
+                    </div>
+                  )}
+                </div>
+              )}
+              {!selectedObj && opts.length === 0 && (
+                <div className="warn-callout" style={{marginTop:'8px', padding:'6px 10px', fontSize:'11.5px'}}>
+                  ⚠ Không có cuộn {layer.code} nào đủ khổ {khoYeuCau}mm trong tồn kho.
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="info-callout" style={{marginTop:'14px'}}>
+        <strong>Logic chọn giấy:</strong> Dropdown chỉ hiển thị các cuộn cùng gsm + cùng type (mặt/sóng) + đủ khổ rộng (≥ khổ ngang sử dụng <strong>{khoYeuCau}mm</strong>).
+        Auto chọn cuộn nhỏ nhất đủ rộng để tối ưu tồn kho. Material code đã chọn sẽ được đẩy xuống <em>Component giấy</em> trong Child Production Order khi confirm lệnh.
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
 //  Allocation Table — Sóng
 // ======================================================================
 function AllocationTableSong({ result }) {
@@ -1811,11 +2076,14 @@ function AllocationTableSong({ result }) {
                 </td>
                 <td style={{fontSize:'11.5px'}}>
                   {l.bom.map((b, i) => (
-                    <div key={i} style={{lineHeight:1.4}}>
-                      <span style={{fontFamily:"'JetBrains Mono', monospace", color:'var(--peacock)', fontWeight:600}}>{b.layer_code}</span>
-                      <span style={{color:'var(--medium-gray)'}}> ({b.role}): </span>
+                    <div key={i} style={{lineHeight:1.4, marginBottom:'2px'}}>
+                      <span style={{fontFamily:"'JetBrains Mono', monospace", color:'var(--peacock)', fontWeight:600}}>{b.material}</span>
+                      <span style={{color:'var(--medium-gray)'}}> · </span>
                       <strong>{b.kg.toFixed(2)}</strong> kg
                       {b.is_song && <span style={{color:'var(--medium-gray)', fontSize:'10.5px'}}> · ×{b.take_up}</span>}
+                      <div style={{fontSize:'10px', color:'var(--medium-gray)', marginLeft:'2px'}}>
+                        {b.role} · {b.supplier !== '—' ? `${b.supplier} · ${b.batch}` : 'Chưa chọn cuộn'}
+                      </div>
                     </div>
                   ))}
                 </td>
@@ -1952,7 +2220,21 @@ function SAPPreviewSong({ result, params }) {
   const startDate = fmtDate(today);
   const endDate = fmtDate(plus(today, 1));
 
-  // Parent CBO (technical)
+  // Parent CBO (technical) — bao gồm danh sách cuộn giấy thực tế đã chọn
+  const selectedPaperList = result.cauTruc.layers.map((layer, idx) => {
+    const code = params.selected_papers && params.selected_papers[idx];
+    const obj = code ? GIAY_NGUYEN_LIEU[code] : null;
+    return {
+      layer_idx: idx,
+      layer_role: layer.role,
+      layer_spec: layer.code,
+      material_selected: obj ? obj.code : null,
+      supplier: obj ? obj.supplier : null,
+      batch: obj ? obj.batch : null,
+      kho_rong_cuon_mm: obj ? obj.kho_rong : null,
+    };
+  });
+
   const parent = {
     parent_order_id: parentId,
     type: 'Corrugation Parent (Custom Business Object)',
@@ -1965,6 +2247,7 @@ function SAPPreviewSong({ result, params }) {
     met_dai_vat_ly: Number(result.metDaiVatLy.toFixed(1)),
     bu_hao_dau_cuon: params.bu_hao_dau_cuon,
     num_children: result.lines.length,
+    selected_papers: selectedPaperList,
   };
 
   const children = result.lines.map((l, idx) => ({
@@ -1973,12 +2256,23 @@ function SAPPreviewSong({ result, params }) {
     order_qty: l.sl,
     unit: 'TAM',
     parent_corrugation_id: parentId,
+    sales_order: l.so_number || null,
+    sales_order_item: l.so_item || null,
+    customer: l.khach,
+    account_assignment: l.so_number ? {
+      type: 'Sales Order',
+      so_number: l.so_number,
+      so_item: l.so_item,
+    } : null,
     components: l.bom.map(b => ({
       material: b.material,
+      material_name: b.material_name,
       bom_qty_override_kg: Number(b.kg.toFixed(2)),
       role: b.role,
       gsm: b.gsm,
       take_up_factor: b.take_up,
+      supplier: b.supplier,
+      batch: b.batch,
       unit: 'KG',
     })),
     planned_scrap_m2: Number(l.phePhamM2.toFixed(2)),
@@ -2082,12 +2376,12 @@ function SAPPreviewSong({ result, params }) {
         <table className="data po-children">
           <thead>
             <tr>
-              <th style={{width:'14%'}}>Child PO</th>
-              <th style={{width:'20%'}}>Thành phẩm carton</th>
-              <th style={{width:'10%'}}>Khách hàng</th>
-              <th className="num" style={{width:'8%'}}>Order Qty</th>
-              <th style={{width:'34%'}}>BOM giấy (multi-component, kg override)</th>
-              <th className="num" style={{width:'10%'}}>Planned Scrap</th>
+              <th style={{width:'13%'}}>Child PO</th>
+              <th style={{width:'12%'}}>Sales Order</th>
+              <th style={{width:'18%'}}>Thành phẩm carton</th>
+              <th className="num" style={{width:'7%'}}>Order Qty</th>
+              <th style={{width:'37%'}}>BOM giấy (multi-component · Material thực · kg override)</th>
+              <th className="num" style={{width:'9%'}}>Planned Scrap</th>
             </tr>
           </thead>
           <tbody>
@@ -2102,24 +2396,39 @@ function SAPPreviewSong({ result, params }) {
                     </div>
                   </td>
                   <td>
+                    <div style={{fontFamily:"'JetBrains Mono', monospace", fontWeight:600, color:'var(--peacock)', fontSize:'11.5px'}}>
+                      {l.so_number || '—'}
+                    </div>
+                    <div style={{fontSize:'10.5px', color:'var(--medium-gray)', marginTop:'2px'}}>
+                      Item {l.so_item || '—'}
+                    </div>
+                    <div style={{fontSize:'10.5px', color:'var(--medium-gray)', marginTop:'1px'}}>
+                      {l.khach}
+                    </div>
+                  </td>
+                  <td>
                     <div className="po-mat-code">{l.ma}</div>
                     <div className="po-mat-desc">{l.ten}</div>
                     <div style={{fontSize:'10.5px', color:'var(--medium-gray)', marginTop:'2px'}}>
                       {l.length}×{l.width}×{l.height}mm
                     </div>
                   </td>
-                  <td style={{fontSize:'11.5px'}}>{l.khach}</td>
                   <td className="num">
                     <strong>{l.sl.toLocaleString()}</strong>
                     <div style={{fontSize:'10.5px',color:'var(--medium-gray)'}}>tấm</div>
                   </td>
                   <td>
                     {l.bom.map((b, i) => (
-                      <div key={i} className="po-comp-line" style={{marginBottom:'3px'}}>
-                        <span className="code">GIAY-{b.layer_code}</span>
-                        <span style={{color:'var(--medium-gray)', fontSize:'10.5px'}}> · {b.role}</span>
-                        <span style={{marginLeft:'6px'}}><strong>{b.kg.toFixed(2)}</strong> <span style={{color:'var(--medium-gray)'}}>kg</span></span>
-                        <span className="override">override</span>
+                      <div key={i} className="po-comp-line" style={{marginBottom:'4px', paddingBottom:'3px', borderBottom: i < l.bom.length-1 ? '1px dashed rgba(0,0,0,0.06)' : 'none'}}>
+                        <div>
+                          <span className="code">{b.material}</span>
+                          <span style={{marginLeft:'6px'}}><strong>{b.kg.toFixed(2)}</strong> <span style={{color:'var(--medium-gray)'}}>kg</span></span>
+                          <span className="override">override</span>
+                        </div>
+                        <div style={{fontSize:'10px', color:'var(--medium-gray)', marginTop:'1px'}}>
+                          {b.role} · {b.gsm}gsm{b.is_song && ` · ×${b.take_up}`}
+                          {b.supplier !== '—' && ` · ${b.supplier} · ${b.batch}`}
+                        </div>
                       </div>
                     ))}
                     <div style={{fontSize:'10.5px', color:'var(--medium-gray)', marginTop:'3px'}}>
@@ -2228,22 +2537,53 @@ function OffsetCalculator() {
 // ======================================================================
 function CorrugationCalculator() {
   const [demand, setDemand] = useState(SEED_DEMAND_SONG);
-  const [params, setParams] = useState({
+  const [paramsBase, setParamsBase] = useState({
     may_song: 'SONG-2200',
     kho_ngang_max: 2200,
     toc_do: 150,
     bu_hao_dau_cuon: 30,
   });
+  const [selectedPapers, setSelectedPapers] = useState({});
 
   const selectedLines = demand.filter(l => l.include);
-  const result = useMemo(() => computeCorrugation(selectedLines, params), [demand, params]);
+
+  // Compute lần 1 (chưa có selected papers) — để biết khổ ngang sử dụng + cấu trúc
+  const preResult = useMemo(
+    () => computeCorrugation(selectedLines, { ...paramsBase, selected_papers: {} }),
+    [demand, paramsBase]
+  );
+
+  // Auto-pick default papers khi cấu trúc / khổ ngang đổi
+  useEffect(() => {
+    if (preResult.error || preResult.empty || !preResult.cauTrucCode) return;
+    const defaultPick = pickDefaultPapers(preResult.cauTrucCode, preResult.khoNgangSuDung);
+    const currentLayers = preResult.cauTruc.layers.length;
+    const selectedKeys = Object.keys(selectedPapers).map(Number);
+    const needReset = selectedKeys.length !== currentLayers ||
+      Object.values(selectedPapers).some(code => {
+        const obj = GIAY_NGUYEN_LIEU[code];
+        return !obj || obj.kho_rong < preResult.khoNgangSuDung;
+      });
+    if (needReset) {
+      setSelectedPapers(defaultPick);
+    }
+    // eslint-disable-next-line
+  }, [preResult.cauTrucCode, preResult.khoNgangSuDung]);
+
+  // Compute lần 2 với selected papers
+  const params = { ...paramsBase, selected_papers: selectedPapers };
+  const result = useMemo(
+    () => computeCorrugation(selectedLines, params),
+    [demand, paramsBase, selectedPapers]
+  );
 
   const toggleInclude = (id) => setDemand(demand.map(l => l.id === id ? { ...l, include: !l.include } : l));
   const removeLine = (id) => setDemand(demand.filter(l => l.id !== id));
   const addLine = () => {
     const newId = 'CRG' + String(demand.length + 1).padStart(3, '0');
     setDemand([...demand, {
-      id: newId, ma: `CTN-NEW-${demand.length+1}`, ten: 'Carton mới', khach: 'Khách hàng mới',
+      id: newId, so_number: `SO-2026-${String(200 + demand.length).padStart(4,'0')}`, so_item: 10,
+      ma: `CTN-NEW-${demand.length+1}`, ten: 'Carton mới', khach: 'Khách hàng mới',
       length: 600, width: 400, height: 200,
       cau_truc: '3L_B_K200_M125_K150', sl: 1000, bu_hao_sx: 30, include: true,
     }]);
@@ -2253,7 +2593,8 @@ function CorrugationCalculator() {
     <>
       <KPIBarSong result={result} selectedCount={selectedLines.length} />
       <DemandPoolSong lines={demand} onChange={setDemand} onToggle={toggleInclude} onRemove={removeLine} onAdd={addLine} />
-      <ParametersSong params={params} onChange={setParams} selectedLines={selectedLines} />
+      <ParametersSong params={paramsBase} onChange={setParamsBase} selectedLines={selectedLines} />
+      <PaperSelectionSong result={result} selectedPapers={selectedPapers} onChange={setSelectedPapers} />
       <AllocationTableSong result={result} />
       <WidthVisualizerSong result={result} />
       <SAPPreviewSong result={result} params={params} />
