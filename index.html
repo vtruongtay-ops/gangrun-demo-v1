@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ITP Gang-Run Printing Calculator — Citek Demo</title>
+<title>ITP Gang-Run Calculator (Offset + Corrugation) — Citek Demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -678,7 +678,7 @@ function Header() {
         <CitekLogo />
         <div className="brand-divider"></div>
         <div className="brand-title">
-          <h1>Gang-Run Printing Calculator</h1>
+          <h1>Gang-Run Calculator · In Offset + Sóng Corrugation</h1>
           <p>SAP S/4HANA Public Cloud · Custom Engine · ITP Demo</p>
         </div>
       </div>
@@ -1379,9 +1379,805 @@ function SAPPreview({ result, params }) {
 }
 
 // ======================================================================
-//  App
+// ============== GHÉP BÀI SÓNG (CORRUGATION) — MASTER DATA ============
 // ======================================================================
-function App() {
+
+const MAY_SONG_MASTER = [
+  { code:'SONG-1600', name:'Máy sóng SE 1600 · Khổ ngang 1600mm', kho_ngang_max:1600, toc_do:120 },
+  { code:'SONG-2200', name:'Máy sóng MHI 2200 · Khổ ngang 2200mm', kho_ngang_max:2200, toc_do:150 },
+  { code:'SONG-2500', name:'Máy sóng BHS 2500 · Khổ ngang 2500mm', kho_ngang_max:2500, toc_do:180 },
+];
+
+// Kiểu sóng: cao (mm), take-up factor (m giấy sóng / m carton)
+const SONG_TYPE_MASTER = {
+  'B':  { name:'Sóng B',  cao:3.0, take_up:1.32 },
+  'C':  { name:'Sóng C',  cao:4.0, take_up:1.43 },
+  'E':  { name:'Sóng E',  cao:1.5, take_up:1.27 },
+  'EB': { name:'Sóng EB (5L)', cao:4.5, take_up:2.59 },
+  'BC': { name:'Sóng BC (5L)', cao:7.0, take_up:2.75 },
+};
+
+const GIAY_LOAI_MASTER = {
+  'K200': { name:'Kraft 200 gsm',   gsm:200, type:'mat' },
+  'K150': { name:'Kraft 150 gsm',   gsm:150, type:'mat' },
+  'T160': { name:'Test 160 gsm',    gsm:160, type:'mat' },
+  'T140': { name:'Test 140 gsm',    gsm:140, type:'mat' },
+  'M125': { name:'Medium 125 gsm',  gsm:125, type:'song' },
+  'M115': { name:'Medium 115 gsm',  gsm:115, type:'song' },
+};
+
+const CAU_TRUC_MASTER = {
+  '3L_B_K200_M125_K150': {
+    desc:'3 lớp · sóng B · K200/M125/K150', so_lop:3, song:'B',
+    layers: [
+      { code:'K200', role:'Mặt trên' },
+      { code:'M125', role:'Sóng B', flute:'B' },
+      { code:'K150', role:'Mặt dưới' },
+    ],
+  },
+  '3L_C_K200_M125_K150': {
+    desc:'3 lớp · sóng C · K200/M125/K150', so_lop:3, song:'C',
+    layers: [
+      { code:'K200', role:'Mặt trên' },
+      { code:'M125', role:'Sóng C', flute:'C' },
+      { code:'K150', role:'Mặt dưới' },
+    ],
+  },
+  '5L_BC_K200_M125_T160_M125_K200': {
+    desc:'5 lớp · sóng BC · K200/M125/T160/M125/K200', so_lop:5, song:'BC',
+    layers: [
+      { code:'K200', role:'Mặt trên' },
+      { code:'M125', role:'Sóng B', flute:'B' },
+      { code:'T160', role:'Mặt giữa' },
+      { code:'M125', role:'Sóng C', flute:'C' },
+      { code:'K200', role:'Mặt dưới' },
+    ],
+  },
+  '5L_EB_K200_M125_T140_M115_K150': {
+    desc:'5 lớp · sóng EB · K200/M125/T140/M115/K150', so_lop:5, song:'EB',
+    layers: [
+      { code:'K200', role:'Mặt trên' },
+      { code:'M125', role:'Sóng E', flute:'E' },
+      { code:'T140', role:'Mặt giữa' },
+      { code:'M115', role:'Sóng B', flute:'B' },
+      { code:'K150', role:'Mặt dưới' },
+    ],
+  },
+};
+
+// 5 SP carton mẫu — chia 2 group cấu trúc khác nhau
+const SEED_DEMAND_SONG = [
+  // Group A — 3 lớp B-flute (có thể ghép trên máy 2200)
+  { id:'CRG001', ma:'CTN-SS-55', ten:'Carton TV Samsung 55"', khach:'Samsung VN',
+    length:1280, width:780, height:200,
+    cau_truc:'3L_B_K200_M125_K150', sl:1500, bu_hao_sx:50, include:true },
+  { id:'CRG002', ma:'CTN-SS-65', ten:'Carton TV Samsung 65"', khach:'Samsung VN',
+    length:1500, width:920, height:220,
+    cau_truc:'3L_B_K200_M125_K150', sl:1200, bu_hao_sx:40, include:true },
+  { id:'CRG003', ma:'CTN-FV-DSP', ten:'Hộp display dược FV', khach:'FV Hospital',
+    length:850, width:480, height:180,
+    cau_truc:'3L_B_K200_M125_K150', sl:2200, bu_hao_sx:80, include:false },
+
+  // Group B — 5 lớp BC-flute (xuất khẩu)
+  { id:'CRG004', ma:'CTN-DLH-5', ten:'Carton xuất khẩu Dalat Hasfarm 5kg', khach:'Dalat Hasfarm',
+    length:600, width:400, height:200,
+    cau_truc:'5L_BC_K200_M125_T160_M125_K200', sl:3000, bu_hao_sx:100, include:false },
+  { id:'CRG005', ma:'CTN-DLH-10', ten:'Carton xuất khẩu Dalat Hasfarm 10kg', khach:'Dalat Hasfarm',
+    length:700, width:500, height:280,
+    cau_truc:'5L_BC_K200_M125_T160_M125_K200', sl:2500, bu_hao_sx:90, include:false },
+];
+
+// ======================================================================
+//  Engine ghép bài sóng
+// ======================================================================
+function computeCorrugation(lines, params) {
+  if (lines.length === 0) {
+    return { lines:[], error:false, empty:true };
+  }
+
+  // 1. Constraint: tất cả SP phải có cùng cấu trúc giấy + kiểu sóng
+  const cauTrucSet = [...new Set(lines.map(l => l.cau_truc))];
+  if (cauTrucSet.length > 1) {
+    return {
+      lines:[], error:true,
+      warning:`Không thể ghép ${lines.length} SP có ${cauTrucSet.length} cấu trúc giấy khác nhau. Chọn các SP có cùng cấu trúc (cùng kiểu sóng + cùng số lớp + cùng loại giấy).`,
+    };
+  }
+  const cauTruc = CAU_TRUC_MASTER[cauTrucSet[0]];
+  if (!cauTruc) {
+    return { lines:[], error:true, warning:`Cấu trúc ${cauTrucSet[0]} chưa định nghĩa trong master.` };
+  }
+
+  // 2. Tổng width ngang + biên cắt giữa các SP (5mm/cặp)
+  const totalWidth = lines.reduce((s, l) => s + l.width, 0);
+  const bienCat = Math.max(0, lines.length - 1) * 5;
+  const khoNgangSuDung = totalWidth + bienCat;
+
+  // 3. Constraint khổ ngang
+  const overWidth = khoNgangSuDung > params.kho_ngang_max;
+
+  // 4. Mét cuộn cần riêng từng SP (m) = (chiều dài tấm × SL + bù hao SX) / 1000
+  const enriched = lines.map(l => {
+    const metCanSP = ((l.length * l.sl) + (l.bu_hao_sx * l.length)) / 1000;
+    const dienTichTamM2 = (l.length * l.width) / 1_000_000;
+    return { ...l, metCanSP, dienTichTamM2 };
+  });
+
+  // 5. Mét cuộn vật lý = max(mét cần) + bù hao đầu cuối cuộn (m)
+  const maxMetCan = Math.max(...enriched.map(l => l.metCanSP));
+  const metDaiVatLy = maxMetCan + (params.bu_hao_dau_cuon || 30);
+
+  // 6. m² chạy thực = (kho_ngang_su_dung mm / 1000) × mét vật lý
+  const tongDienTichRunM2 = (khoNgangSuDung / 1000) * metDaiVatLy;
+  const tongDienTichKhoMaxM2 = (params.kho_ngang_max / 1000) * metDaiVatLy;
+
+  // 7. Allocation per SP — theo trọng số diện tích thực dùng (width × mét cần riêng)
+  const sumWeighted = enriched.reduce((s, l) => s + (l.width * l.metCanSP), 0);
+  const allocated = enriched.map(l => {
+    const tyLe = sumWeighted > 0 ? (l.width * l.metCanSP) / sumWeighted : 0;
+    const dienTichSPCanM2 = l.dienTichTamM2 * l.sl;
+
+    // Phế: SP cần ít hơn → vẫn chiếm width nhưng dư mét dài
+    const phePhamM2 = ((metDaiVatLy - l.metCanSP) * l.width) / 1000;
+
+    // BOM giấy phân bổ cho SP này (kg)
+    const bom = cauTruc.layers.map(layer => {
+      const giay = GIAY_LOAI_MASTER[layer.code];
+      const isSong = !!layer.flute;
+      const takeUp = isSong ? SONG_TYPE_MASTER[layer.flute].take_up : 1.0;
+      // Phân bổ theo tỷ lệ × tổng diện tích chạy
+      const dienTichPhanBoM2 = tyLe * tongDienTichRunM2;
+      const kg = (dienTichPhanBoM2 * giay.gsm * takeUp) / 1000;
+      return {
+        material: `GIAY-${layer.code}`,
+        layer_code: layer.code,
+        role: layer.role,
+        gsm: giay.gsm,
+        take_up: takeUp,
+        is_song: isSong,
+        dien_tich_m2: dienTichPhanBoM2,
+        kg,
+      };
+    });
+
+    return { ...l, tyLe, dienTichSPCanM2, phePhamM2, bom };
+  });
+
+  // 8. Utilization = diện tích SP cần / diện tích chạy thực
+  const tongDienTichSPCanM2 = allocated.reduce((s, l) => s + l.dienTichSPCanM2, 0);
+  const utilization = tongDienTichRunM2 > 0
+    ? (tongDienTichSPCanM2 / tongDienTichRunM2) * 100
+    : 0;
+  const utilKhoMax = tongDienTichKhoMaxM2 > 0
+    ? (tongDienTichSPCanM2 / tongDienTichKhoMaxM2) * 100
+    : 0;
+
+  // 9. Thời gian chạy ước (phút)
+  const thoiGianChayMin = (params.toc_do > 0) ? metDaiVatLy / params.toc_do : 0;
+
+  return {
+    lines: allocated,
+    cauTruc,
+    cauTrucCode: cauTrucSet[0],
+    khoNgangMax: params.kho_ngang_max,
+    khoNgangSuDung,
+    bienCat,
+    totalWidth,
+    overWidth,
+    metDaiVatLy,
+    maxMetCan,
+    tongDienTichRunM2,
+    tongDienTichKhoMaxM2,
+    tongDienTichSPCanM2,
+    utilization,
+    utilKhoMax,
+    thoiGianChayMin,
+    error: false,
+    warning: overWidth ? `Tổng chiều rộng ${khoNgangSuDung}mm vượt khổ máy ${params.kho_ngang_max}mm — cần bỏ bớt SP hoặc đổi máy lớn hơn.` : null,
+  };
+}
+
+// ======================================================================
+//  KPI Bar — Sóng
+// ======================================================================
+function KPIBarSong({ result, selectedCount }) {
+  const { khoNgangSuDung=0, khoNgangMax=0, metDaiVatLy=0, utilization=0, thoiGianChayMin=0, overWidth } = result;
+  const utilPill = utilization >= 80 ? 'pill-ok' : utilization >= 60 ? 'pill-warn' : 'pill-bad';
+  const widthPct = khoNgangMax > 0 ? Math.min(100, (khoNgangSuDung / khoNgangMax) * 100) : 0;
+  const widthPill = overWidth ? 'pill-bad' : (widthPct >= 80 ? 'pill-ok' : widthPct >= 60 ? 'pill-warn' : 'pill-info');
+  return (
+    <div className="kpi-grid">
+      <div className="kpi">
+        <div className="kpi-label">SP trong lệnh sóng</div>
+        <div className="kpi-value">{selectedCount}<span className="kpi-unit">SP</span></div>
+        <div className="kpi-foot">Child Production Orders sẽ tạo</div>
+      </div>
+      <div className={`kpi ${overWidth ? 'danger' : 'accent'}`}>
+        <div className="kpi-label">Khổ ngang sử dụng</div>
+        <div className="kpi-value">{khoNgangSuDung.toLocaleString()}<span className="kpi-unit">mm</span></div>
+        <div className="kpi-foot">
+          / {khoNgangMax.toLocaleString()}mm khổ máy &nbsp;·&nbsp;
+          <span className={`pill ${widthPill}`}>{widthPct.toFixed(0)}%</span>
+        </div>
+      </div>
+      <div className="kpi">
+        <div className="kpi-label">Mét cuộn vật lý</div>
+        <div className="kpi-value">{metDaiVatLy.toFixed(1)}<span className="kpi-unit">m</span></div>
+        <div className="kpi-foot">max(mét cần) + bù hao đầu/cuối cuộn</div>
+      </div>
+      <div className="kpi">
+        <div className="kpi-label">Khai thác diện tích</div>
+        <div className="kpi-value">{utilization.toFixed(1)}<span className="kpi-unit">%</span></div>
+        <div className="kpi-foot">
+          <span className={`pill ${utilPill}`}>
+            {utilization >= 80 ? 'Tối ưu' : utilization >= 60 ? 'Khá' : 'Kém'}
+          </span>
+          &nbsp;· Thời gian chạy ~{thoiGianChayMin.toFixed(1)} phút
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  Demand Pool — Sóng
+// ======================================================================
+function DemandPoolSong({ lines, onChange, onToggle, onRemove, onAdd }) {
+  const updateField = (id, field, val) => {
+    onChange(lines.map(l => l.id === id ? { ...l, [field]: val } : l));
+  };
+  return (
+    <div className="card">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">Demand Pool · Lệnh sóng</span>
+      </div>
+      <h2 className="section-title">Các SP carton cần lên kế hoạch chạy sóng</h2>
+      <div style={{overflowX:'auto'}}>
+        <table className="data">
+          <thead>
+            <tr>
+              <th style={{width:'48px'}}>Ghép</th>
+              <th>Mã SP</th>
+              <th>Tên SP</th>
+              <th>Khách hàng</th>
+              <th className="num">Dài (mm)</th>
+              <th className="num">Rộng (mm)</th>
+              <th className="num">Cao (mm)</th>
+              <th>Cấu trúc giấy</th>
+              <th className="num">SL (tấm)</th>
+              <th className="num">Bù hao SX</th>
+              <th style={{width:'48px'}}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.map(l => (
+              <tr key={l.id} className={l.include ? 'selected' : ''}>
+                <td><input type="checkbox" checked={l.include} onChange={() => onToggle(l.id)} /></td>
+                <td><input type="text" className="inline" value={l.ma} onChange={e => updateField(l.id, 'ma', e.target.value)} /></td>
+                <td><input type="text" className="inline" value={l.ten} onChange={e => updateField(l.id, 'ten', e.target.value)} /></td>
+                <td><input type="text" className="inline" value={l.khach} onChange={e => updateField(l.id, 'khach', e.target.value)} /></td>
+                <td className="num"><input type="number" className="inline" value={l.length} onChange={e => updateField(l.id, 'length', +e.target.value)} /></td>
+                <td className="num"><input type="number" className="inline" value={l.width} onChange={e => updateField(l.id, 'width', +e.target.value)} /></td>
+                <td className="num"><input type="number" className="inline" value={l.height} onChange={e => updateField(l.id, 'height', +e.target.value)} /></td>
+                <td>
+                  <select className="inline" value={l.cau_truc} onChange={e => updateField(l.id, 'cau_truc', e.target.value)} style={{minWidth:'180px'}}>
+                    {Object.keys(CAU_TRUC_MASTER).map(k => (
+                      <option key={k} value={k}>{CAU_TRUC_MASTER[k].desc}</option>
+                    ))}
+                  </select>
+                </td>
+                <td className="num"><input type="number" className="inline" value={l.sl} onChange={e => updateField(l.id, 'sl', +e.target.value)} /></td>
+                <td className="num"><input type="number" className="inline" value={l.bu_hao_sx} onChange={e => updateField(l.id, 'bu_hao_sx', +e.target.value)} /></td>
+                <td><button className="btn btn-danger" onClick={() => onRemove(l.id)}>Xóa</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{marginTop:12, display:'flex', gap:8}}>
+        <button className="btn btn-ghost" onClick={onAdd}>+ Thêm SO line</button>
+      </div>
+      <div className="info-callout">
+        <strong>Logic ghép sóng:</strong> Chỉ các SP có <em>cùng cấu trúc giấy</em> (cùng kiểu sóng + số lớp + loại giấy mặt/sóng) mới ghép được trên 1 lần chạy máy sóng.
+        Tổng chiều rộng ngang phải ≤ khổ máy, mét dài cuộn lấy theo SP có nhu cầu lớn nhất.
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  Parameters — Sóng
+// ======================================================================
+function ParametersSong({ params, onChange, selectedLines }) {
+  const update = (field, val) => onChange({ ...params, [field]: val });
+  const may = MAY_SONG_MASTER.find(m => m.code === params.may_song) || {};
+  const cauTrucList = [...new Set(selectedLines.map(l => l.cau_truc))];
+  const cauTrucObj = cauTrucList.length === 1 ? CAU_TRUC_MASTER[cauTrucList[0]] : null;
+
+  return (
+    <div className="card">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">Parameters · Thông số chạy sóng</span>
+      </div>
+      <h2 className="section-title">Thông số máy sóng & cuộn giấy</h2>
+      <div className="params-grid">
+        <div className="field">
+          <label>Máy sóng</label>
+          <select value={params.may_song} onChange={e => {
+            const m = MAY_SONG_MASTER.find(x => x.code === e.target.value);
+            onChange({ ...params, may_song: e.target.value, kho_ngang_max: m.kho_ngang_max, toc_do: m.toc_do });
+          }}>
+            {MAY_SONG_MASTER.map(m => <option key={m.code} value={m.code}>{m.name}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label>Khổ ngang max (mm)</label>
+          <input type="number" value={params.kho_ngang_max} onChange={e => update('kho_ngang_max', +e.target.value)} />
+        </div>
+        <div className="field">
+          <label>Tốc độ máy (m/phút)</label>
+          <input type="number" value={params.toc_do} onChange={e => update('toc_do', +e.target.value)} />
+        </div>
+        <div className="field">
+          <label>Bù hao đầu/cuối cuộn (m)</label>
+          <input type="number" value={params.bu_hao_dau_cuon} onChange={e => update('bu_hao_dau_cuon', +e.target.value)} />
+        </div>
+      </div>
+
+      {cauTrucObj && (
+        <div className="info-callout" style={{marginTop:14}}>
+          <strong>Cấu trúc giấy đang chọn:</strong> {cauTrucObj.desc}<br/>
+          <span style={{fontSize:'11.5px', color:'var(--medium-gray)'}}>
+            {cauTrucObj.layers.map((ly, i) => (
+              <span key={i}>
+                {i > 0 && ' / '}
+                <strong style={{color:'var(--peacock)'}}>{ly.code}</strong> ({ly.role})
+              </span>
+            ))}
+          </span>
+        </div>
+      )}
+      {cauTrucList.length > 1 && (
+        <div className="warn-callout" style={{marginTop:14}}>
+          <strong>⚠ Cảnh báo:</strong> Đang chọn {cauTrucList.length} cấu trúc giấy khác nhau. Engine sẽ báo lỗi không ghép được.
+          Bỏ tick các SP có cấu trúc khác để chỉ ghép cùng nhóm.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ======================================================================
+//  Allocation Table — Sóng
+// ======================================================================
+function AllocationTableSong({ result }) {
+  if (result.empty || result.lines.length === 0) return null;
+  if (result.error) {
+    return (
+      <div className="card">
+        <div className="section-tag">
+          <span className="section-tag-bar"></span>
+          <span className="section-tag-text">Allocation Result</span>
+        </div>
+        <h2 className="section-title">Không thể ghép — vi phạm constraint</h2>
+        <div className="warn-callout">
+          <strong>⚠</strong> {result.warning}
+        </div>
+      </div>
+    );
+  }
+
+  const totals = result.lines.reduce((acc, l) => {
+    acc.tyLe += l.tyLe;
+    acc.dienTichSPCan += l.dienTichSPCanM2;
+    acc.phePham += l.phePhamM2;
+    return acc;
+  }, { tyLe:0, dienTichSPCan:0, phePham:0 });
+
+  return (
+    <div className="card">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">Allocation Engine · Sóng</span>
+      </div>
+      <h2 className="section-title">Phân bổ tiêu hao giấy theo từng SP</h2>
+      <div style={{overflowX:'auto'}}>
+        <table className="data">
+          <thead>
+            <tr>
+              <th>Mã SP</th>
+              <th className="num">Width (mm)</th>
+              <th className="num">SL × Dài</th>
+              <th className="num">Mét cần riêng (m)</th>
+              <th className="num">Tỷ lệ phân bổ</th>
+              <th className="num">DT SP cần (m²)</th>
+              <th className="num">Phế ghép (m²)</th>
+              <th>BOM giấy phân bổ (kg)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.lines.map(l => (
+              <tr key={l.id}>
+                <td><strong style={{color:'var(--peacock)'}}>{l.ma}</strong></td>
+                <td className="num">{l.width.toLocaleString()}</td>
+                <td className="num">{l.sl.toLocaleString()} × {l.length}mm</td>
+                <td className="num">{l.metCanSP.toFixed(1)}</td>
+                <td className="num"><strong>{(l.tyLe*100).toFixed(2)}%</strong></td>
+                <td className="num">{l.dienTichSPCanM2.toFixed(2)}</td>
+                <td className="num" style={{color: l.phePhamM2 > 5 ? 'var(--warning)' : 'var(--medium-gray)'}}>
+                  {l.phePhamM2.toFixed(2)}
+                </td>
+                <td style={{fontSize:'11.5px'}}>
+                  {l.bom.map((b, i) => (
+                    <div key={i} style={{lineHeight:1.4}}>
+                      <span style={{fontFamily:"'JetBrains Mono', monospace", color:'var(--peacock)', fontWeight:600}}>{b.layer_code}</span>
+                      <span style={{color:'var(--medium-gray)'}}> ({b.role}): </span>
+                      <strong>{b.kg.toFixed(2)}</strong> kg
+                      {b.is_song && <span style={{color:'var(--medium-gray)', fontSize:'10.5px'}}> · ×{b.take_up}</span>}
+                    </div>
+                  ))}
+                </td>
+              </tr>
+            ))}
+            <tr style={{background:'var(--light-gray)', fontWeight:600}}>
+              <td colSpan="3">TỔNG</td>
+              <td className="num">{result.maxMetCan.toFixed(1)} <span style={{fontSize:'10.5px',color:'var(--medium-gray)',fontWeight:400}}>(max)</span></td>
+              <td className="num">{(totals.tyLe*100).toFixed(2)}%</td>
+              <td className="num">{totals.dienTichSPCan.toFixed(2)}</td>
+              <td className="num">{totals.phePham.toFixed(2)}</td>
+              <td style={{fontSize:'11.5px'}}>Diện tích chạy: <strong>{result.tongDienTichRunM2.toFixed(2)} m²</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div className="formula-box">
+        <strong>Công thức engine ghép sóng:</strong><br/>
+        <code>Tỷ lệ_i = (width_i × mét cần_i) / Σ(width × mét cần)</code><br/>
+        <code>Mét cuộn vật lý = max(SL × dài/1000) + Bù hao đầu/cuối cuộn</code><br/>
+        <code>kg giấy mặt phân bổ_i = (Tỷ lệ_i × DT chạy m²) × gsm / 1000</code><br/>
+        <code>kg giấy sóng phân bổ_i = (Tỷ lệ_i × DT chạy m²) × gsm × take_up / 1000</code> &nbsp;→&nbsp; push xuống Production Order BOM
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  Width Visualizer — Sóng (top-down view khổ ngang máy)
+// ======================================================================
+function WidthVisualizerSong({ result }) {
+  if (result.empty || result.lines.length === 0 || result.error) return null;
+
+  const PX_PER_MM = 0.4; // scale
+  const machineW = result.khoNgangMax * PX_PER_MM;
+  const usedW = result.khoNgangSuDung * PX_PER_MM;
+  const machineH = 80;
+  const palette = ['#00586F', '#A2D45E', '#00D4FF', '#F59E0B', '#7E57C2', '#26A69A'];
+
+  let xCursor = 0;
+  const placements = result.lines.map((l, idx) => {
+    const w = l.width * PX_PER_MM;
+    const placement = {
+      x: xCursor, w, color: palette[idx % palette.length],
+      label: l.ma, ratio: l.tyLe, widthMm: l.width,
+    };
+    xCursor += w + 5 * PX_PER_MM; // 5mm biên cắt
+    return placement;
+  });
+  const wasteW = machineW - usedW;
+
+  return (
+    <div className="card">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">Layout · Khổ ngang máy sóng</span>
+      </div>
+      <h2 className="section-title">Bố cục SP trên khổ ngang máy ({result.khoNgangMax}mm)</h2>
+      <div className="sheet-svg-wrap">
+        <svg className="sheet-svg" width={machineW + 40} height={machineH + 60} viewBox={`0 0 ${machineW + 40} ${machineH + 60}`}>
+          {/* Khung máy */}
+          <rect x="20" y="20" width={machineW} height={machineH} fill="#FFFFFF" stroke="var(--peacock)" strokeWidth="2"/>
+          {/* Vùng phế cạnh */}
+          {wasteW > 1 && (
+            <rect x={20 + usedW} y="20" width={wasteW} height={machineH}
+              fill="url(#hatchSong)" />
+          )}
+          <defs>
+            <pattern id="hatchSong" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+              <line x1="0" y="0" x2="0" y2="6" stroke="#F59E0B" strokeWidth="1" opacity="0.5"/>
+            </pattern>
+          </defs>
+          {/* SP placements */}
+          {placements.map((p, idx) => (
+            <g key={idx}>
+              <rect x={20 + p.x} y="20" width={p.w} height={machineH}
+                fill={p.color} fillOpacity="0.85" stroke="#FFFFFF" strokeWidth="1"/>
+              <text x={20 + p.x + p.w/2} y={20 + machineH/2 - 4} textAnchor="middle"
+                fill="#FFFFFF" fontSize="11" fontWeight="600" fontFamily="Montserrat">
+                {p.label}
+              </text>
+              <text x={20 + p.x + p.w/2} y={20 + machineH/2 + 12} textAnchor="middle"
+                fill="#FFFFFF" fontSize="10" opacity="0.95" fontFamily="Montserrat">
+                {p.widthMm}mm · {(p.ratio*100).toFixed(0)}%
+              </text>
+            </g>
+          ))}
+          {/* Thước đo */}
+          <text x="20" y="118" fontSize="10" fill="var(--medium-gray)" fontFamily="Montserrat">0mm</text>
+          <text x={20 + machineW - 30} y="118" fontSize="10" fill="var(--medium-gray)" fontFamily="Montserrat">{result.khoNgangMax}mm</text>
+          {wasteW > 30 && (
+            <text x={20 + usedW + wasteW/2} y="118" textAnchor="middle"
+              fontSize="10" fill="var(--warning)" fontWeight="600" fontFamily="Montserrat">
+              Phế cạnh: {(result.khoNgangMax - result.khoNgangSuDung)}mm
+            </text>
+          )}
+        </svg>
+      </div>
+      <div className="legend-sap" style={{marginTop:14}}>
+        {result.lines.map((l, idx) => (
+          <div key={l.id} className="legend-item">
+            <div className="legend-dot" style={{background: palette[idx % palette.length]}}></div>
+            <span><strong>{l.ma}</strong> · width {l.width}mm · {(l.tyLe*100).toFixed(1)}%</span>
+          </div>
+        ))}
+        <div className="legend-item">
+          <div className="legend-dot" style={{background:'#F59E0B', opacity:0.5}}></div>
+          <span>Phế cạnh máy</span>
+        </div>
+      </div>
+      <div className="info-callout" style={{marginTop:14}}>
+        <strong>Top-down view:</strong> Cuộn giấy đi qua máy theo chiều dọc (chiều dài). Khổ ngang máy cố định ({result.khoNgangMax}mm) — các SP xếp cạnh nhau theo chiều ngang, phế cạnh là phần còn dư không tận dụng.
+        Chiều dài cuộn vật lý: <strong>{result.metDaiVatLy.toFixed(1)}m</strong>.
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  SAP Preview — Sóng
+// ======================================================================
+function SAPPreviewSong({ result, params }) {
+  if (result.empty || result.lines.length === 0 || result.error) return null;
+
+  const parentId = useMemo(
+    () => 'CRG-' + String(Math.floor(100000 + Math.random()*900000)),
+    [result.lines.length, params.may_song, result.cauTrucCode]
+  );
+  const maySongObj = MAY_SONG_MASTER.find(m => m.code === params.may_song) || {};
+
+  const today = new Date();
+  const plus = (d, n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+  const fmtDate = (d) => `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+  const startDate = fmtDate(today);
+  const endDate = fmtDate(plus(today, 1));
+
+  // Parent CBO (technical)
+  const parent = {
+    parent_order_id: parentId,
+    type: 'Corrugation Parent (Custom Business Object)',
+    status: 'Released',
+    may_song: params.may_song,
+    cau_truc: result.cauTrucCode,
+    so_lop: result.cauTruc.so_lop,
+    kieu_song: result.cauTruc.song,
+    kho_ngang_su_dung_mm: result.khoNgangSuDung,
+    met_dai_vat_ly: Number(result.metDaiVatLy.toFixed(1)),
+    bu_hao_dau_cuon: params.bu_hao_dau_cuon,
+    num_children: result.lines.length,
+  };
+
+  const children = result.lines.map((l, idx) => ({
+    child_po: `PO-${parentId}-${String(idx+1).padStart(2,'0')}`,
+    material: l.ma,
+    order_qty: l.sl,
+    unit: 'TAM',
+    parent_corrugation_id: parentId,
+    components: l.bom.map(b => ({
+      material: b.material,
+      bom_qty_override_kg: Number(b.kg.toFixed(2)),
+      role: b.role,
+      gsm: b.gsm,
+      take_up_factor: b.take_up,
+      unit: 'KG',
+    })),
+    planned_scrap_m2: Number(l.phePhamM2.toFixed(2)),
+    custom_fields: {
+      ty_le_dien_tich: Number((l.tyLe*100).toFixed(2)),
+      width_mm: l.width,
+      length_mm: l.length,
+    },
+  }));
+
+  const parentJson = JSON.stringify(parent, null, 2);
+  const childJson = JSON.stringify(children, null, 2);
+
+  return (
+    <div className="card">
+      <div className="section-tag">
+        <span className="section-tag-bar"></span>
+        <span className="section-tag-text">SAP Integration Preview · Sóng</span>
+      </div>
+      <h2 className="section-title">Production Orders được tạo từ kết quả ghép sóng</h2>
+
+      {/* Business view */}
+      <div className="po-section-divider">
+        <span className="lbl">Business View · Fiori-style</span>
+        <span className="line"></span>
+      </div>
+
+      <div className="po-header-card">
+        <div className="po-header-top">
+          <div className="po-id-block">
+            <div className="po-type">Corrugation Parent Order · Custom Business Object</div>
+            <div className="po-id">{parentId}</div>
+            <div className="po-desc">
+              Lệnh chạy sóng cho <strong>{result.lines.length} sản phẩm</strong> · Máy: <strong>{maySongObj.name || params.may_song}</strong> · Cấu trúc: <strong>{result.cauTruc.desc}</strong>
+            </div>
+          </div>
+          <div className="po-header-badges">
+            <span className="pill pill-ok">● Released</span>
+            <span className="pill pill-info">Order Type: ZCRG</span>
+            <span className="pill pill-info">Plant: ITP01</span>
+          </div>
+        </div>
+
+        <div className="po-meta-grid">
+          <div className="po-meta">
+            <div className="po-meta-label">Máy sóng (Work Center)</div>
+            <div className="po-meta-value">{maySongObj.name || params.may_song}</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Kiểu sóng</div>
+            <div className="po-meta-value">{SONG_TYPE_MASTER[result.cauTruc.song]?.name || result.cauTruc.song}</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Số lớp</div>
+            <div className="po-meta-value"><span className="accent-num">{result.cauTruc.so_lop}</span> lớp</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Khổ ngang sử dụng</div>
+            <div className="po-meta-value"><span className="accent-num">{result.khoNgangSuDung.toLocaleString()}</span> / {result.khoNgangMax.toLocaleString()} <span style={{fontSize:'11px',color:'var(--medium-gray)',fontWeight:400}}>mm</span></div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Mét cuộn vật lý</div>
+            <div className="po-meta-value"><span className="accent-num">{result.metDaiVatLy.toFixed(1)}</span> m</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Diện tích chạy</div>
+            <div className="po-meta-value"><span className="accent-num">{result.tongDienTichRunM2.toFixed(1)}</span> m²</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Bù hao đầu/cuối cuộn</div>
+            <div className="po-meta-value"><span className="accent-num">{params.bu_hao_dau_cuon}</span> m</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Utilization</div>
+            <div className="po-meta-value"><span className="accent-num">{result.utilization.toFixed(1)}</span>%</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Thời gian chạy ước</div>
+            <div className="po-meta-value"><span className="accent-num">{result.thoiGianChayMin.toFixed(1)}</span> phút</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Planned Start</div>
+            <div className="po-meta-value">{startDate}</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Planned End</div>
+            <div className="po-meta-value">{endDate}</div>
+          </div>
+          <div className="po-meta">
+            <div className="po-meta-label">Child POs</div>
+            <div className="po-meta-value"><span className="accent-num">{result.lines.length}</span> lệnh</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="po-children-wrap">
+        <div className="po-children-head">
+          <span>▸ Child Production Orders · Standard SAP Production Order</span>
+          <span className="count">{result.lines.length} PO</span>
+        </div>
+        <table className="data po-children">
+          <thead>
+            <tr>
+              <th style={{width:'14%'}}>Child PO</th>
+              <th style={{width:'20%'}}>Thành phẩm carton</th>
+              <th style={{width:'10%'}}>Khách hàng</th>
+              <th className="num" style={{width:'8%'}}>Order Qty</th>
+              <th style={{width:'34%'}}>BOM giấy (multi-component, kg override)</th>
+              <th className="num" style={{width:'10%'}}>Planned Scrap</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.lines.map((l, idx) => {
+              const childPo = `PO-${parentId}-${String(idx+1).padStart(2,'0')}`;
+              return (
+                <tr key={childPo}>
+                  <td>
+                    <div className="po-child-id">{childPo}</div>
+                    <div style={{marginTop:'2px'}}>
+                      <span className="pill pill-ok" style={{fontSize:'9.5px',padding:'1px 6px'}}>Released</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="po-mat-code">{l.ma}</div>
+                    <div className="po-mat-desc">{l.ten}</div>
+                    <div style={{fontSize:'10.5px', color:'var(--medium-gray)', marginTop:'2px'}}>
+                      {l.length}×{l.width}×{l.height}mm
+                    </div>
+                  </td>
+                  <td style={{fontSize:'11.5px'}}>{l.khach}</td>
+                  <td className="num">
+                    <strong>{l.sl.toLocaleString()}</strong>
+                    <div style={{fontSize:'10.5px',color:'var(--medium-gray)'}}>tấm</div>
+                  </td>
+                  <td>
+                    {l.bom.map((b, i) => (
+                      <div key={i} className="po-comp-line" style={{marginBottom:'3px'}}>
+                        <span className="code">GIAY-{b.layer_code}</span>
+                        <span style={{color:'var(--medium-gray)', fontSize:'10.5px'}}> · {b.role}</span>
+                        <span style={{marginLeft:'6px'}}><strong>{b.kg.toFixed(2)}</strong> <span style={{color:'var(--medium-gray)'}}>kg</span></span>
+                        <span className="override">override</span>
+                      </div>
+                    ))}
+                    <div style={{fontSize:'10.5px', color:'var(--medium-gray)', marginTop:'3px'}}>
+                      Tỷ lệ phân bổ: {(l.tyLe*100).toFixed(2)}%
+                    </div>
+                  </td>
+                  <td className="num">
+                    <strong>{l.phePhamM2.toFixed(2)}</strong>
+                    <div style={{fontSize:'10.5px',color:'var(--medium-gray)'}}>m² (phế)</div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="info-callout">
+        <strong>Cách đọc:</strong> Parent Corrugation Order là <em>Custom Business Object</em> — gom các SP cùng cấu trúc giấy chạy trên 1 lần máy sóng.
+        Mỗi Child PO = <em>Production Order chuẩn SAP</em> với BOM đa thành phần (giấy mặt + giấy sóng), số lượng từng component được <strong>override theo phân bổ ghép sóng</strong>.
+        Hệ số take-up của từng kiểu sóng (B=1.32, C=1.43, EB=2.59, BC=2.75) tự động áp vào tính kg giấy sóng tiêu hao.
+      </div>
+
+      <div className="po-section-divider" style={{marginTop:'22px'}}>
+        <span className="lbl">Technical Payload · SAP API Integration</span>
+        <span className="line"></span>
+      </div>
+
+      <div className="legend-sap">
+        <div className="legend-item"><div className="legend-dot" style={{background:'var(--peacock)'}}></div><span>Custom Business Object (RAP)</span></div>
+        <div className="legend-item"><div className="legend-dot" style={{background:'var(--lime)'}}></div><span>Standard Production Order (A2X API)</span></div>
+        <div className="legend-item"><div className="legend-dot" style={{background:'var(--cyan)'}}></div><span>Multi-Component BOM Override</span></div>
+      </div>
+
+      <div className="two-col">
+        <div>
+          <h4 style={{margin:'0 0 8px 0', color:'var(--peacock)'}}>▸ Parent CBO payload</h4>
+          <pre className="json-view">{parentJson}</pre>
+          <div className="info-callout">
+            Payload gửi vào <code>ZCorrugationOrder</code> (CBO dựng bằng RAP/ABAP Cloud).
+          </div>
+        </div>
+        <div>
+          <h4 style={{margin:'0 0 8px 0', color:'var(--peacock)'}}>▸ Child POs payload (multi-component BOM)</h4>
+          <pre className="json-view">{childJson}</pre>
+          <div className="info-callout">
+            Mỗi Child gọi A2X API <code>API_PRODUCTION_ORDER_2</code>, override qty cho TỪNG component giấy mặt + giấy sóng.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ======================================================================
+//  Offset Calculator (wrapper cho logic in cũ)
+// ======================================================================
+function OffsetCalculator() {
   const [demand, setDemand] = useState(SEED_DEMAND);
   const [params, setParams] = useState({
     kho_nguyen: '790x1090',
@@ -1391,7 +2187,6 @@ function App() {
   });
 
   const selectedLines = demand.filter(l => l.include);
-
   const result = useMemo(() => {
     if (selectedLines.length === 0) {
       return {
@@ -1404,12 +2199,8 @@ function App() {
     return computeGangRun(selectedLines, params.bu_hao_in_total, toInToNguyen);
   }, [demand, params]);
 
-  const toggleInclude = (id) => {
-    setDemand(demand.map(l => l.id === id ? { ...l, include: !l.include } : l));
-  };
-  const removeLine = (id) => {
-    setDemand(demand.filter(l => l.id !== id));
-  };
+  const toggleInclude = (id) => setDemand(demand.map(l => l.id === id ? { ...l, include: !l.include } : l));
+  const removeLine = (id) => setDemand(demand.filter(l => l.id !== id));
   const addLine = () => {
     const newId = 'SO' + String(demand.length + 1).padStart(3, '0');
     setDemand([...demand, {
@@ -1421,31 +2212,81 @@ function App() {
   };
 
   return (
+    <>
+      <KPIBar result={result} selectedCount={selectedLines.length} />
+      <DemandPool lines={demand} onChange={setDemand} onToggle={toggleInclude} onRemove={removeLine} onAdd={addLine} />
+      <Parameters params={params} onChange={setParams} selectedLines={selectedLines} />
+      <AllocationTable result={result} />
+      <SheetVisualizer result={result} khoNguyen={params.kho_nguyen} />
+      <SAPPreview result={result} params={params} />
+    </>
+  );
+}
+
+// ======================================================================
+//  Corrugation Calculator
+// ======================================================================
+function CorrugationCalculator() {
+  const [demand, setDemand] = useState(SEED_DEMAND_SONG);
+  const [params, setParams] = useState({
+    may_song: 'SONG-2200',
+    kho_ngang_max: 2200,
+    toc_do: 150,
+    bu_hao_dau_cuon: 30,
+  });
+
+  const selectedLines = demand.filter(l => l.include);
+  const result = useMemo(() => computeCorrugation(selectedLines, params), [demand, params]);
+
+  const toggleInclude = (id) => setDemand(demand.map(l => l.id === id ? { ...l, include: !l.include } : l));
+  const removeLine = (id) => setDemand(demand.filter(l => l.id !== id));
+  const addLine = () => {
+    const newId = 'CRG' + String(demand.length + 1).padStart(3, '0');
+    setDemand([...demand, {
+      id: newId, ma: `CTN-NEW-${demand.length+1}`, ten: 'Carton mới', khach: 'Khách hàng mới',
+      length: 600, width: 400, height: 200,
+      cau_truc: '3L_B_K200_M125_K150', sl: 1000, bu_hao_sx: 30, include: true,
+    }]);
+  };
+
+  return (
+    <>
+      <KPIBarSong result={result} selectedCount={selectedLines.length} />
+      <DemandPoolSong lines={demand} onChange={setDemand} onToggle={toggleInclude} onRemove={removeLine} onAdd={addLine} />
+      <ParametersSong params={params} onChange={setParams} selectedLines={selectedLines} />
+      <AllocationTableSong result={result} />
+      <WidthVisualizerSong result={result} />
+      <SAPPreviewSong result={result} params={params} />
+    </>
+  );
+}
+
+// ======================================================================
+//  App (root) — Tabs
+// ======================================================================
+function App() {
+  const [activeTab, setActiveTab] = useState('offset');
+  return (
     <div>
       <Header />
       <div className="main-container">
 
-        <KPIBar result={result} selectedCount={selectedLines.length} />
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === 'offset' ? 'active' : ''}`}
+            onClick={() => setActiveTab('offset')}
+          >
+            Ghép bài in (Offset)
+          </button>
+          <button
+            className={`tab ${activeTab === 'song' ? 'active' : ''}`}
+            onClick={() => setActiveTab('song')}
+          >
+            Ghép bài sóng (Corrugation)
+          </button>
+        </div>
 
-        <DemandPool
-          lines={demand}
-          onChange={setDemand}
-          onToggle={toggleInclude}
-          onRemove={removeLine}
-          onAdd={addLine}
-        />
-
-        <Parameters
-          params={params}
-          onChange={setParams}
-          selectedLines={selectedLines}
-        />
-
-        <AllocationTable result={result} />
-
-        <SheetVisualizer result={result} khoNguyen={params.kho_nguyen} />
-
-        <SAPPreview result={result} params={params} />
+        {activeTab === 'offset' ? <OffsetCalculator /> : <CorrugationCalculator />}
 
         <div className="card-flat">
           <details>
@@ -1454,26 +2295,26 @@ function App() {
               <p><strong style={{color:'var(--peacock)'}}>1. Layer chuẩn SAP S/4HANA Public Cloud:</strong></p>
               <ul>
                 <li><strong>Sales Order</strong> — nguồn demand, không custom</li>
-                <li><strong>Material Master</strong> + custom fields (khổ trải, kiểu in, SP/tờ in) qua Key User Extensibility</li>
-                <li><strong>BOM & Routing</strong> — chuẩn, nhưng BOM qty giấy in bị override ở PO khi ghép bài</li>
+                <li><strong>Material Master</strong> + custom fields (khổ trải, kiểu in, SP/tờ in, cấu trúc giấy, kiểu sóng) qua Key User Extensibility</li>
+                <li><strong>BOM & Routing</strong> — chuẩn, nhưng BOM qty các component bị override ở PO khi ghép bài</li>
                 <li><strong>Production Order</strong> — Child PO = PO chuẩn, tạo qua A2X API từ tool ghép bài</li>
-                <li><strong>PRT (Production Resource/Tool)</strong> — dùng cho kẽm + khuôn, chuẩn SAP</li>
-                <li><strong>Work Center</strong> — máy in, chuẩn SAP</li>
+                <li><strong>PRT (Production Resource/Tool)</strong> — dùng cho kẽm + khuôn (in offset) và trục sóng (corrugation), chuẩn SAP</li>
+                <li><strong>Work Center</strong> — máy in / máy sóng, chuẩn SAP</li>
                 <li><strong>Settlement & Costing</strong> — đi theo từng Child PO, chuẩn SAP, không custom</li>
               </ul>
               <p><strong style={{color:'var(--peacock)'}}>2. Layer custom (trên Developer Extensibility — RAP / ABAP Cloud):</strong></p>
               <ul>
-                <li><strong>Packaging Planning Worksheet</strong> (Custom Fiori app) — tool này chính là UI mockup</li>
-                <li><strong>Parent CBO "Gang-Run Order"</strong> — gom Child POs, lưu thông tin in chung</li>
-                <li><strong>Allocation Engine</strong> — tính tỷ lệ diện tích + override BOM qty</li>
-                <li><strong>Mapping CBOs</strong> — Thông số màu, Số con/Khổ nguyên (không có sẵn chuẩn)</li>
-                <li><strong>Integration với MES</strong> — push parent info, nhận confirmation, phân bổ GI giấy</li>
+                <li><strong>Packaging Planning Worksheet</strong> (Custom Fiori app) — tool này chính là UI mockup, dùng cho cả 2 công đoạn in & sóng</li>
+                <li><strong>Parent CBOs</strong> — <code>ZGangRunOrder</code> (in) và <code>ZCorrugationOrder</code> (sóng), gom Child POs theo từng lệnh ghép</li>
+                <li><strong>Allocation Engines</strong> — 2 engine riêng cho 2 logic ghép khác nhau (diện tích × SP/tờ vs. width × mét cuộn × take-up)</li>
+                <li><strong>Mapping CBOs</strong> — Thông số màu, Cấu trúc giấy, Take-up factor sóng (không có sẵn chuẩn)</li>
+                <li><strong>Integration với MES</strong> — push parent info, nhận confirmation, phân bổ GI giấy theo allocation</li>
               </ul>
               <p><strong style={{color:'var(--peacock)'}}>3. Đặc điểm thiết kế:</strong></p>
               <ul>
-                <li>Cấu trúc 2 tầng PPW → Production Order, gọn và dễ vận hành</li>
-                <li>KPI utilization & variance — đo lường chất lượng ghép bài theo thời gian</li>
-                <li>Tận dụng PRT chuẩn cho kẽm/khuôn — không cần mapping thủ công</li>
+                <li>Cùng kiến trúc Parent CBO + Child PO chuẩn cho cả 2 công đoạn — đồng nhất, dễ training & vận hành</li>
+                <li>BOM override pattern áp được cho cả single-component (giấy in) và multi-component (giấy mặt + giấy sóng × N)</li>
+                <li>KPI utilization & variance — đo lường chất lượng ghép bài theo thời gian, áp được cho cả 2 logic</li>
                 <li>Costing tự động qua SAP Settlement, không cần custom allocation FI</li>
               </ul>
             </div>
@@ -1485,7 +2326,7 @@ function App() {
           <div className="gi-green"></div>
         </div>
         <div className="foot-note">
-          <strong>Citek ▸</strong> Gang-Run Printing Calculator · ITP Presales Demo ·
+          <strong>Citek ▸</strong> Gang-Run Calculator (Offset + Corrugation) · ITP Presales Demo ·
           SAP S/4HANA Public Cloud + Developer Extensibility (RAP)
         </div>
 
