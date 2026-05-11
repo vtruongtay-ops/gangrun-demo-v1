@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ITP Gang-Run Calculator (Offset + Corrugation) — Citek Demo</title>
+<title>Gang-Run Calculator (Offset + Corrugation) — Citek Demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -764,7 +764,7 @@ function Header() {
         <div className="brand-divider"></div>
         <div className="brand-title">
           <h1>Gang-Run Calculator · In Offset + Sóng Corrugation</h1>
-          <p>SAP S/4HANA Public Cloud · Custom Engine · ITP Demo</p>
+          <p>SAP S/4HANA Public Cloud · Custom Engine · Packaging Industry Demo</p>
         </div>
       </div>
       <div className="header-pill">SAP Platinum Partner</div>
@@ -773,35 +773,35 @@ function Header() {
 }
 
 // ======================================================================
-//  Seed data — mô phỏng dữ liệu ITP (từ intoanphat.com)
+//  Seed data — sample dữ liệu ngành bao bì in
 // ======================================================================
 const SEED_DEMAND = [
-  { id:'SO001', ma:'HOP-FV-001', ten:'Hộp dược phẩm FV Hospital — MKS-0115', khach:'FV Hospital',
+  { id:'SO001', ma:'HOP-PHAR-001', ten:'Hộp dược phẩm A — Mã MKS-0115', khach:'KH Dược phẩm A',
     length:210, width:296, sp_to_in:4, to_in_to_nguyen:1, kho_nguyen:'790x1090', kho_in:'395x520',
     sl:8900, bu_hao_sx:280, thong_so_mau:'CMYK_CMYK', kieu_in:'Offset', include:true },
-  { id:'SO002', ma:'HOP-FV-002', ten:'Hộp Epidemic Conjunctivitis — MPS-0243', khach:'FV Hospital',
+  { id:'SO002', ma:'HOP-PHAR-002', ten:'Hộp dược phẩm B — Mã MPS-0243', khach:'KH Dược phẩm A',
     length:300, width:210, sp_to_in:1, to_in_to_nguyen:1, kho_nguyen:'790x1090', kho_in:'395x520',
     sl:4500, bu_hao_sx:120, thong_so_mau:'CMYK_CMYK', kieu_in:'Offset', include:true },
-  { id:'SO003', ma:'HOP-FV-003', ten:'Hộp Breastfeeding Guide — MPS-0117', khach:'FV Hospital',
+  { id:'SO003', ma:'HOP-PHAR-003', ten:'Hộp dược phẩm C — Mã MPS-0117', khach:'KH Dược phẩm A',
     length:210, width:296, sp_to_in:3, to_in_to_nguyen:1, kho_nguyen:'790x1090', kho_in:'395x520',
     sl:6600, bu_hao_sx:200, thong_so_mau:'CMYK_CMYK', kieu_in:'Offset', include:true },
-  { id:'SO004', ma:'HOP-COSMETIC-01', ten:'Hộp mỹ phẩm L\'Oreal Serum 30ml', khach:'L\'Oreal VN',
+  { id:'SO004', ma:'HOP-COSM-01', ten:'Hộp mỹ phẩm Serum 30ml', khach:'KH Mỹ phẩm B',
     length:80, width:160, sp_to_in:12, to_in_to_nguyen:2, kho_nguyen:'790x1090', kho_in:'395x520',
     sl:15000, bu_hao_sx:450, thong_so_mau:'CMYK_CMYK', kieu_in:'Offset', include:false },
-  { id:'SO005', ma:'TEM-DLH-001', ten:'Tem nhãn Dalat Hasfarm — Lavender', khach:'Dalat Hasfarm',
+  { id:'SO005', ma:'TEM-AGRI-001', ten:'Tem nhãn nông sản — mẫu Lavender', khach:'KH Nông sản C',
     length:60, width:90, sp_to_in:40, to_in_to_nguyen:4, kho_nguyen:'790x1090', kho_in:'260x360',
     sl:50000, bu_hao_sx:1000, thong_so_mau:'CMYK_CMYK', kieu_in:'Offset', include:false },
 ];
 
 const MAY_IN_MASTER = [
-  { code:'FAM000643', name:'Mitsubishi Diamond V3000LS-5 · Offset 5 màu (2014)',
-    hang:'Mitsubishi', model:'Diamond V3000LS-5', so_mau:5, serial:'2315', nam:2014,
+  { code:'OFFSET-01', name:'Máy in Offset 5 màu · Heidelberg / Komori / Mitsubishi',
+    hang:'—', model:'5 màu CMYK + 1', so_mau:5, serial:'—', nam:null,
     kho_max:'—', kho_min:'—', kho_kem:'—' },
-  { code:'FAM000831', name:'RYOBI R752 · Offset 2 màu',
-    hang:'RYOBI', model:'R752', so_mau:2, serial:'—', nam:null,
+  { code:'OFFSET-02', name:'Máy in Offset 4 màu · Khổ trung',
+    hang:'—', model:'4 màu CMYK', so_mau:4, serial:'—', nam:null,
     kho_max:'—', kho_min:'—', kho_kem:'—' },
-  { code:'FAM001395', name:'Mitsubishi D3000LS-5 + sấy IR · Offset 5 màu (2008)',
-    hang:'Mitsubishi', model:'D3000LS-5 + sấy IR', so_mau:5, serial:'—', nam:2008,
+  { code:'OFFSET-03', name:'Máy in Offset 1-2 màu · Khổ nhỏ',
+    hang:'—', model:'1-2 màu', so_mau:2, serial:'—', nam:null,
     kho_max:'—', kho_min:'—', kho_kem:'—' },
 ];
 
@@ -1302,7 +1302,7 @@ function SAPPreview({ result, params }) {
           <div className="po-header-badges">
             <span className="pill pill-ok">● Released</span>
             <span className="pill pill-info">Order Type: ZGR1</span>
-            <span className="pill pill-info">Plant: ITP01</span>
+            <span className="pill pill-info">Plant: PLT01</span>
           </div>
         </div>
 
@@ -1533,21 +1533,21 @@ const CAU_TRUC_MASTER = {
 // 5 SP carton mẫu — chia 2 group cấu trúc khác nhau
 const SEED_DEMAND_SONG = [
   // Group A — 3 lớp B-flute (có thể ghép trên máy 2200)
-  { id:'CRG001', so_number:'SO-2026-0142', so_item:10, ma:'CTN-SS-55', ten:'Carton TV Samsung 55"', khach:'Samsung VN',
+  { id:'CRG001', so_number:'SO-2026-0142', so_item:10, ma:'CTN-ELE-55', ten:'Carton điện tử TV 55"', khach:'KH Điện tử A',
     length:1280, width:780, height:200,
     cau_truc:'3L_B_K200_M125_K150', sl:1500, bu_hao_sx:50, include:true },
-  { id:'CRG002', so_number:'SO-2026-0142', so_item:20, ma:'CTN-SS-65', ten:'Carton TV Samsung 65"', khach:'Samsung VN',
+  { id:'CRG002', so_number:'SO-2026-0142', so_item:20, ma:'CTN-ELE-65', ten:'Carton điện tử TV 65"', khach:'KH Điện tử A',
     length:1500, width:920, height:220,
     cau_truc:'3L_B_K200_M125_K150', sl:1200, bu_hao_sx:40, include:true },
-  { id:'CRG003', so_number:'SO-2026-0156', so_item:10, ma:'CTN-FV-DSP', ten:'Hộp display dược FV', khach:'FV Hospital',
+  { id:'CRG003', so_number:'SO-2026-0156', so_item:10, ma:'CTN-PHAR-DSP', ten:'Hộp display dược phẩm', khach:'KH Dược phẩm B',
     length:850, width:480, height:180,
     cau_truc:'3L_B_K200_M125_K150', sl:2200, bu_hao_sx:80, include:false },
 
   // Group B — 5 lớp BC-flute (xuất khẩu)
-  { id:'CRG004', so_number:'SO-2026-0178', so_item:10, ma:'CTN-DLH-5', ten:'Carton xuất khẩu Dalat Hasfarm 5kg', khach:'Dalat Hasfarm',
+  { id:'CRG004', so_number:'SO-2026-0178', so_item:10, ma:'CTN-EXP-5', ten:'Carton xuất khẩu nông sản 5kg', khach:'KH Nông sản C',
     length:600, width:400, height:200,
     cau_truc:'5L_BC_K200_M125_T160_M125_K200', sl:3000, bu_hao_sx:100, include:false },
-  { id:'CRG005', so_number:'SO-2026-0178', so_item:20, ma:'CTN-DLH-10', ten:'Carton xuất khẩu Dalat Hasfarm 10kg', khach:'Dalat Hasfarm',
+  { id:'CRG005', so_number:'SO-2026-0178', so_item:20, ma:'CTN-EXP-10', ten:'Carton xuất khẩu nông sản 10kg', khach:'KH Nông sản C',
     length:700, width:500, height:280,
     cau_truc:'5L_BC_K200_M125_T160_M125_K200', sl:2500, bu_hao_sx:90, include:false },
 ];
@@ -2312,7 +2312,7 @@ function SAPPreviewSong({ result, params }) {
           <div className="po-header-badges">
             <span className="pill pill-ok">● Released</span>
             <span className="pill pill-info">Order Type: ZCRG</span>
-            <span className="pill pill-info">Plant: ITP01</span>
+            <span className="pill pill-info">Plant: PLT01</span>
           </div>
         </div>
 
@@ -2490,7 +2490,7 @@ function OffsetCalculator() {
   const [demand, setDemand] = useState(SEED_DEMAND);
   const [params, setParams] = useState({
     kho_nguyen: '790x1090',
-    may_in: 'FAM000643',
+    may_in: 'OFFSET-01',
     thong_so_mau: 'CMYK_CMYK',
     bu_hao_in_total: 200,
   });
@@ -2667,7 +2667,7 @@ function App() {
           <div className="gi-green"></div>
         </div>
         <div className="foot-note">
-          <strong>Citek ▸</strong> Gang-Run Calculator (Offset + Corrugation) · ITP Presales Demo ·
+          <strong>Citek ▸</strong> Gang-Run Calculator (Offset + Corrugation) · Packaging Presales Demo ·
           SAP S/4HANA Public Cloud + Developer Extensibility (RAP)
         </div>
 
